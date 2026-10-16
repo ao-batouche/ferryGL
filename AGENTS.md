@@ -129,6 +129,20 @@ issues and pull requests. Mark planned features as planned.
 - These need the project owner's explicit approval each time: merging to `main`, making the
   repository public, publishing a release or a PyPI package, and changing the license.
 
+## Releasing
+
+Releases need the project owner's approval each time.
+
+1. In a pull request, set `__version__` in `src/ferrygl/__init__.py` (the only place the
+   version lives) and update the README for anything users will notice. Merge it.
+2. Tag the merge commit on `main` with `v<version>`, such as `v0.2.0`, and push the tag.
+3. `.github/workflows/release.yml` tests and builds the package, checks that the tag matches
+   the version, publishes to PyPI through trusted publishing (no token is stored), and
+   creates a GitHub release with the built files.
+
+PyPI never accepts the same version twice. If a release is broken, publish a new patch
+version rather than trying to replace it.
+
 ## Working agreement
 
 - Settle routine implementation choices yourself, within these rules.
@@ -143,7 +157,7 @@ issues and pull requests. Mark planned features as planned.
 - `check` and `sync` are implemented and tested with fixtures. GitHub reads have been
   exercised against a real repository. Reads and writes against a real Linear workspace
   haven't been exercised yet, so do a read-only preview before the first release.
-- Planned: a scheduled GitHub Actions template and a first PyPI release.
+- Planned: a scheduled GitHub Actions template.
 - Finding pull requests with the user's commits scans every pull request in scope, because
   GitHub search has no commit-author qualifier for pull requests. Keep that scan bounded by
   `since`, and watch its cost when changing it.
