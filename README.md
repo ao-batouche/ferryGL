@@ -8,7 +8,7 @@ ferryGL copies the GitHub issues and pull requests you work on into your own Lin
 workspace, and keeps their status up to date. It works in repositories you can read but
 don't administer, using only your own credentials.
 
-> **Status: early version (0.1).** `ferrygl check` and `ferrygl sync` work, and are tested
+> **Status: early version (0.2).** `ferrygl check` and `ferrygl sync` work, and are tested
 > with local fixtures and against a real GitHub repository.
 >
 > ferryGL is an independent project. It is not affiliated with or endorsed by Linear or GitHub.
