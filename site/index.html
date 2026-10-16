@@ -15,7 +15,7 @@
     <div class="container hero-grid">
       <div class="hero-copy">
         <a class="badge" href="./docs/getting-started.html">
-          <span class="badge-tag">v0.1</span>
+          <span class="badge-tag">v0.2</span>
           Early release
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
         </a>
@@ -221,7 +221,7 @@ acme/api#348  involved  adopt   -&gt; ENG-9
         </li>
         <li class="card">
           <h3>Look up Linear</h3>
-          <p>It finds the Linear issues it made before by their links to GitHub, and checks for issues you made by hand that mention the item.</p>
+          <p>It finds the Linear issues it made before by their links to GitHub, and looks for one of your issues in the route's team that already mentions the item.</p>
         </li>
         <li class="card">
           <h3>Plan</h3>
@@ -268,7 +268,7 @@ acme/api#348  involved  adopt   -&gt; ENG-9
         <div class="card feature">
           <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5L3 5Z"/></svg></div>
           <h3>Little is copied</h3>
-          <p>Titles, numbers, repository names, links and states. Descriptions only if you turn them on. Never GitHub comments or other people's names.</p>
+          <p>Titles, numbers, repository names, links and states. Descriptions only if you turn them on. Never GitHub comments or other people's names. Its own comments, off by default, name only GitHub items, states and statuses.</p>
         </div>
         <div class="card feature">
           <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/></svg></div>
@@ -312,7 +312,7 @@ acme/api#348  involved  adopt   -&gt; ENG-9
 <span class="c-key">team</span> = <span class="c-string">"ENG"</span>          <span class="c-comment"># Linear team key or name</span>
 
 <span class="c-table">[sync]</span>
-<span class="c-key">since</span> = <span class="c-num">2026-09-01</span>    <span class="c-comment"># skip older items</span></pre></div>
+<span class="c-key">since</span> = <span class="c-num">2026-09-01</span>    <span class="c-comment"># skip items not updated since</span></pre></div>
         </li>
         <li class="card qs-step">
           <h3>Check, preview, then apply</h3>
@@ -345,7 +345,7 @@ acme/api#348  involved  adopt   -&gt; ENG-9
         </a>
         <a class="card doc-card" href="./docs/configuration.html">
           <h3>Configuration<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></h3>
-          <p>Every setting in <code>ferrygl.toml</code>, with its default.</p>
+          <p>Every setting in <code>ferrygl.toml</code>, with its default, and checks in your editor.</p>
         </a>
         <a class="card doc-card" href="./docs/sync-rules.html">
           <h3>Sync rules<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></h3>
@@ -353,7 +353,7 @@ acme/api#348  involved  adopt   -&gt; ENG-9
         </a>
         <a class="card doc-card" href="./docs/commands.html">
           <h3>Commands<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></h3>
-          <p>Reading the plan, exit statuses, running on a schedule, and fixing errors.</p>
+          <p>Reading the plan, exit statuses, running on a schedule or from VS Code, and fixing errors.</p>
         </a>
         <a class="card doc-card" href="./docs/data-and-privacy.html">
           <h3>Data and privacy<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></h3>

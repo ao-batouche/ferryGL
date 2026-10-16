@@ -170,13 +170,13 @@
           "default": "Todo"
         },
         "in_progress": {
-          "description": "For draft pull requests.",
+          "description": "For draft pull requests, and issues whose open pull requests are all drafts.",
           "type": "string",
           "pattern": "\\S",
           "default": "In Progress"
         },
         "in_review": {
-          "description": "For open pull requests, and ones you've reviewed.",
+          "description": "For open pull requests, ones you've reviewed, and issues with a pull request open for review.",
           "type": "string",
           "pattern": "\\S",
           "default": "In Review"
@@ -188,7 +188,7 @@
           "default": "Done"
         },
         "canceled": {
-          "description": "For pull requests closed unmerged, and issues closed as not planned.",
+          "description": "For pull requests closed unmerged, and issues closed as not planned or as duplicates.",
           "type": "string",
           "pattern": "\\S",
           "default": "Canceled"

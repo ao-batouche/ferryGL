@@ -39,7 +39,7 @@
     },
     {
       "id": "read", "step": 3, "title": "Read", "sub": "GitHub, Linear", "code": ["github.py", "linear.py"],
-      "text": "For each route, runs one GitHub search per enabled role and merges the results into one item per URL. Then it looks up the Linear links to every item's URL and, if an item has no Linear issue yet, loads your issues in the route's team as candidates for adoption.",
+      "text": "For each route, runs one GitHub search per enabled role and merges the results into one item per URL. Then it looks up the Linear links to every item's URL and, if an item has no Linear issue of yours yet, loads your issues in the route's team as candidates for adoption.",
       "reads": "GitHub: issues and pull requests. Linear: links, the state recorded on them, and your issues",
       "writes": "Nothing"
     },
@@ -51,13 +51,13 @@
     },
     {
       "id": "print", "step": 5, "title": "Print", "sub": "the preview", "code": ["sync.py"],
-      "text": "Prints every change and a summary. Without `--apply` the run ends here, so a preview runs every step of a real run except the writes.",
+      "text": "Prints every change, with its comment when `[sync] comment` is on. Without `--apply` the run ends here with a summary, so a preview runs every step of a real run except the writes.",
       "reads": "The changes",
       "writes": "The plan, to your terminal"
     },
     {
       "id": "apply", "step": 6, "title": "Apply", "sub": "--apply only", "code": ["sync.py", "linear.py"], "apply": true,
-      "text": "Makes each change in Linear: the status first, then ferryGL's comment when `[sync] comment` is on, then the links, with the new GitHub state recorded last. If a write fails, the state isn't recorded, and the next run tries again.",
+      "text": "Makes each change in Linear: the status first, then ferryGL's comment when `[sync] comment` is on, then the links, with the new GitHub state recorded last. If a write fails, the state isn't recorded, and the next run tries again. Then it prints a summary.",
       "reads": "The changes",
       "writes": "Linear: issues, statuses, links and comments"
     },
@@ -67,15 +67,15 @@
     },
     {
       "id": "linear", "title": "Your Linear workspace", "sub": "issues · statuses · links · comments", "code": ["api.linear.app"],
-      "text": "Where ferryGL keeps its state: the metadata of each GitHub link records the state ferryGL last acted on. The next run reads it back, so reruns never create duplicates."
+      "text": "Where ferryGL keeps its state: the metadata of the GitHub link on each Linear issue it manages records the state ferryGL last acted on. The next run reads it back, so reruns never create duplicates."
     }
   ],
   "edges": [
     {"from": "config", "to": "setup", "text": "The routes, the settings and the API key."},
     {"from": "linear", "to": "setup", "kind": "read", "label": "teams, states", "text": "One query for the API key's owner, then each route's team, its workflow states (once per team), the project and the label."},
     {"from": "setup", "to": "read", "text": "Every route, with its Linear team, states, project and label resolved."},
-    {"from": "github", "to": "read", "kind": "read", "label": "issues, PRs", "text": "One query for the token's login, then one search per enabled role, up to seven, with 50 results a page. With `prs_with_commits`, also a scan of the pull requests in scope."},
-    {"from": "linear", "to": "read", "kind": "read", "label": "links, state", "text": "`attachmentsForURL` for up to 25 URLs a request and, when an item has no Linear issue yet, your issues in the route's team, 50 a page."},
+    {"from": "github", "to": "read", "kind": "read", "label": "issues, PRs", "text": "One query for the token's login, then one search per enabled role, up to seven, with 50 results a page. The `prs_with_commits` search is the commit scan: 25 pull requests a page, each with its first 100 commits."},
+    {"from": "linear", "to": "read", "kind": "read", "label": "links, state", "text": "`attachmentsForURL` for up to 25 URLs a request, the states of any other team where one of your linked issues now lives, and, when an item has no Linear issue of yours yet, your issues in the route's team, 50 a page."},
     {"from": "read", "to": "plan", "text": "The GitHub items, the Linear links and the candidates. Every read for a route is done before planning starts."},
     {"from": "plan", "to": "print", "text": "The list of changes, in display order."},
     {"from": "print", "to": "apply", "apply": true, "text": "The same changes, only with `--apply`."},

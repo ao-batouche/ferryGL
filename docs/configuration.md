@@ -65,9 +65,9 @@ optionally, one project. Add one `[[route]]` table for each destination.
 | `project` | no | The Linear project, by name, for the issues ferryGL creates. The team must have access to it |
 | `github_user` | no | The GitHub CLI account to read these repositories as. See [Getting started](getting-started.md#2-give-ferrygl-read-access-to-github) |
 
-- Each repository belongs to exactly one route. `"acme/*"` in one route and `"acme/api"` in
-  another is an error, because the same items would be planned twice. Names are compared
-  without regard to case.
+- List each repository once, across all routes. `"acme/*"` and `"acme/api"` together, in one
+  route or in two, is an error, because the same items would be planned twice. Names are
+  compared without regard to case.
 - Several routes can send to the same team.
 - The project, like the label, is only set on Linear issues ferryGL creates. Issues it
   adopts keep their own.
@@ -97,7 +97,7 @@ changes from your own, and says what changed and why:
 ```text
 (BY-FGL) Created from acme/api#12. Status Todo: acme/api#12 is open.
 (BY-FGL) Linked acme/api#15, a pull request that refers to acme/api#12.
-(BY-FGL) Status In Review → Done: acme/api#15 was merged.
+(BY-FGL) Status In Review → Done: acme/api#16 was merged.
 (BY-FGL) Status stays In Review: acme/api#12's pull request was merged, and the issue is still open.
 ```
 
@@ -131,8 +131,13 @@ Every search is limited to the route's repositories (`repo:owner/name`, or `user
 
 **`prs_with_commits` is the slowest part of a run.** GitHub search can't find pull requests by
 commit author, so ferryGL reads every pull request in the route that you didn't open (updated
-since `since`), and checks the authors, including co-authors, of its first 100 commits. Set
-`since`, or turn it off with `prs_with_commits = false` if you don't need it.
+since `since`), and checks the authors, including co-authors, of its first 100 commits (up to
+5 authors each). Set `since`, or turn it off with `prs_with_commits = false` if you don't need
+it.
+
+A commit counts only if GitHub links its author email to your account, as it does when the
+commit shows your avatar on GitHub. If you commit with a work email, add it to your GitHub
+account.
 
 ## `[titles]`
 
