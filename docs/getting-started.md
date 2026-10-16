@@ -128,6 +128,8 @@ api_key_file = "~/.config/ferrygl/linear-api-key"
   set `[status]` now.
 - To keep the file elsewhere, pass `--config <path>` or set `FERRYGL_CONFIG`. When
   `XDG_CONFIG_HOME` is set, the default is `$XDG_CONFIG_HOME/ferrygl/ferrygl.toml`.
+- Editing in VS Code? One line at the top of the file gives you
+  [completion and checks](configuration.md#completion-and-checks-in-your-editor).
 
 [Configuration](configuration.md) lists every setting.
 

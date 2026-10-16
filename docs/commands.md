@@ -130,6 +130,56 @@ GitHub token and Linear API key stored as secrets:
 
 A template workflow is planned.
 
+## Running from VS Code
+
+You can run `check` and `sync` from VS Code as
+[tasks](https://code.visualstudio.com/docs/debugtest/tasks). Make them user tasks: they work in
+every window, and nothing is added to the repositories you work in, which usually belong to
+someone else.
+
+1. Run **Tasks: Open User Tasks** from the command palette. If VS Code asks for a template,
+   choose **Others**.
+2. Replace the file's contents with these tasks, or add them to its `tasks` list:
+
+   ```json
+   {
+     "version": "2.0.0",
+     "tasks": [
+       {
+         "label": "ferryGL: check",
+         "detail": "Check credentials, repositories and Linear settings. Writes nothing",
+         "type": "shell",
+         "command": "ferrygl check",
+         "problemMatcher": []
+       },
+       {
+         "label": "ferryGL: preview sync",
+         "detail": "Show the changes a sync would make. Writes nothing",
+         "type": "shell",
+         "command": "ferrygl sync",
+         "problemMatcher": []
+       },
+       {
+         "label": "ferryGL: apply sync",
+         "detail": "Make the changes in Linear",
+         "type": "shell",
+         "command": "ferrygl sync --apply",
+         "problemMatcher": []
+       }
+     ]
+   }
+   ```
+
+3. Run **Tasks: Run Task** and pick one. Its output appears in the terminal panel.
+
+- Preview before you apply, as in a terminal: the apply task doesn't ask for confirmation.
+- `"problemMatcher": []` stops VS Code from asking whether to scan the output for errors.
+- Tasks get the environment VS Code started with. If you set `LINEAR_API_KEY` or `GH_TOKEN`
+  after opening VS Code, restart it, or put the Linear key in `[linear] api_key_file`.
+
+To get completion and checks while you edit `ferrygl.toml`, see
+[Configuration](configuration.md#completion-and-checks-in-your-editor).
+
 ## Troubleshooting
 
 | Message | What to do |

@@ -1,0 +1,212 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://oussamabatouche.com/ferryGL/ferrygl.schema.json",
+  "title": "ferrygl.toml",
+  "description": "ferryGL configuration. Every setting: https://oussamabatouche.com/ferryGL/docs/configuration.html",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["route"],
+  "properties": {
+    "route": {
+      "description": "Repositories whose issues and pull requests go to one Linear team and, optionally, one project. Add one [[route]] table for each destination. Each repository belongs to exactly one route.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["repos", "team"],
+        "properties": {
+          "repos": {
+            "description": "Repositories as \"owner/name\", or \"owner/*\" for every repository of a user or organization.",
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.-]+/([A-Za-z0-9_.-]+|\\*)$"
+            },
+            "examples": [["acme/api", "acme/web"]]
+          },
+          "team": {
+            "description": "The Linear team, by key (\"ENG\") or name. Case doesn't matter.",
+            "type": "string",
+            "pattern": "\\S",
+            "examples": ["ENG"]
+          },
+          "project": {
+            "description": "The Linear project, by name, for the issues ferryGL creates. The team must have access to it.",
+            "type": "string",
+            "pattern": "\\S",
+            "examples": ["Acme engagement"]
+          },
+          "github_user": {
+            "description": "The GitHub CLI account to read these repositories as (gh auth token --user <name>). When set, GH_TOKEN and GITHUB_TOKEN are ignored for this route.",
+            "type": "string",
+            "pattern": "\\S",
+            "examples": ["alice"]
+          }
+        }
+      }
+    },
+    "sync": {
+      "description": "Which items are synced, and what ferryGL adds to the Linear issues it changes.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "since": {
+          "description": "Ignore items not updated on GitHub since this date, such as 2026-09-01. Without it, ferryGL looks at items of any age.",
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}",
+          "examples": ["2026-09-01"]
+        },
+        "label": {
+          "description": "The name of an existing Linear label to add to every issue ferryGL creates.",
+          "type": "string",
+          "pattern": "\\S",
+          "examples": ["ferryGL"]
+        },
+        "comment": {
+          "description": "Post a comment starting with (BY-FGL) on a Linear issue each time ferryGL changes it.",
+          "type": "boolean",
+          "default": false
+        },
+        "issues_assigned": {
+          "description": "Sync issues assigned to you.",
+          "type": "boolean",
+          "default": true
+        },
+        "issues_created": {
+          "description": "Sync issues you created.",
+          "type": "boolean",
+          "default": true
+        },
+        "prs_created": {
+          "description": "Sync pull requests you opened. The other pull request roles leave them out.",
+          "type": "boolean",
+          "default": true
+        },
+        "prs_assigned": {
+          "description": "Sync someone else's pull requests assigned to you.",
+          "type": "boolean",
+          "default": true
+        },
+        "prs_reviewed": {
+          "description": "Sync someone else's pull requests you've reviewed.",
+          "type": "boolean",
+          "default": true
+        },
+        "review_requests": {
+          "description": "Sync someone else's pull requests where your review is requested.",
+          "type": "boolean",
+          "default": true
+        },
+        "prs_with_commits": {
+          "description": "Sync someone else's pull requests with a commit you wrote. This reads every pull request in scope, so it's the slowest part of a run: set since, or turn it off.",
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "titles": {
+      "description": "Title templates for the Linear issues ferryGL creates. They can use {title}, {number} and {repo}. Use \"{repo}#{number}\" to keep GitHub titles out of Linear.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "issue": {
+          "description": "Title for issues you created or are assigned to.",
+          "type": "string",
+          "allOf": [
+            {"pattern": "\\S"},
+            {
+              "pattern": "^([^{}]|\\{\\{|\\}\\}|\\{(title|number|repo)(![rsa])?(:[^{}]*)?\\})*$"
+            }
+          ],
+          "default": "{title} #{number}"
+        },
+        "pr": {
+          "description": "Title for pull requests you opened.",
+          "type": "string",
+          "allOf": [
+            {"pattern": "\\S"},
+            {
+              "pattern": "^([^{}]|\\{\\{|\\}\\}|\\{(title|number|repo)(![rsa])?(:[^{}]*)?\\})*$"
+            }
+          ],
+          "default": "{title} - #{number}"
+        },
+        "involved": {
+          "description": "Title for someone else's pull requests you're part of.",
+          "type": "string",
+          "allOf": [
+            {"pattern": "\\S"},
+            {
+              "pattern": "^([^{}]|\\{\\{|\\}\\}|\\{(title|number|repo)(![rsa])?(:[^{}]*)?\\})*$"
+            }
+          ],
+          "default": "[PR] {title} - #{number}"
+        }
+      }
+    },
+    "copy": {
+      "description": "What ferryGL copies from GitHub, beyond titles, numbers, repositories, links and states.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "description": "Copy the GitHub description into the Linear issue when ferryGL creates it.",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "status": {
+      "description": "Your team's Linear workflow state names, for each status ferryGL sets. Each must exist, spelled exactly the same, in the team of every route.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "todo": {
+          "description": "For open issues, and pull requests whose review is requested from you.",
+          "type": "string",
+          "pattern": "\\S",
+          "default": "Todo"
+        },
+        "in_progress": {
+          "description": "For draft pull requests.",
+          "type": "string",
+          "pattern": "\\S",
+          "default": "In Progress"
+        },
+        "in_review": {
+          "description": "For open pull requests, and ones you've reviewed.",
+          "type": "string",
+          "pattern": "\\S",
+          "default": "In Review"
+        },
+        "done": {
+          "description": "For merged pull requests, and issues closed as completed.",
+          "type": "string",
+          "pattern": "\\S",
+          "default": "Done"
+        },
+        "canceled": {
+          "description": "For pull requests closed unmerged, and issues closed as not planned.",
+          "type": "string",
+          "pattern": "\\S",
+          "default": "Canceled"
+        }
+      }
+    },
+    "linear": {
+      "description": "How ferryGL reaches Linear.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "api_key_file": {
+          "description": "A file holding your Linear API key. ~ is expanded. LINEAR_API_KEY takes precedence over it.",
+          "type": "string",
+          "pattern": "\\S",
+          "examples": ["~/.config/ferrygl/linear-api-key"]
+        }
+      }
+    }
+  }
+}
