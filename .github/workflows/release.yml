@@ -1,0 +1,52 @@
+name: Release
+
+# Push a tag such as v0.1.0 to publish that version to PyPI and create a GitHub release.
+# PyPI accepts the upload through trusted publishing, so no PyPI token is stored here.
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync
+      - run: uv run ruff check
+      - run: uv run pytest
+      - run: uv build
+      - name: Check that the tag matches the package version
+        run: |
+          wheel="dist/ferrygl-${GITHUB_REF_NAME#v}-py3-none-any.whl"
+          test -f "$wheel" || { echo "::error::$GITHUB_REF_NAME doesn't match the built version"; ls dist; exit 1; }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # trusted publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    needs: pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

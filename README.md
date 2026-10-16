@@ -1,10 +1,14 @@
+<p align="center">
+  <img src="assets/ferrygl-logo-horizontal.png" alt="ferryGL" width="560">
+</p>
+
 # ferryGL
 
 Ferry your GitHub work into your own Linear workspace, from repositories you can read but
 don't administer.
 
-> **Status: early version.** `ferrygl check` and `ferrygl sync` work, and are tested with
-> local fixtures. There's no release on PyPI yet.
+> **Status: early version (0.1).** `ferrygl check` and `ferrygl sync` work, and are tested
+> with local fixtures and against a real GitHub repository.
 >
 > ferryGL is an independent project. It is not affiliated with or endorsed by Linear or GitHub.
 
@@ -126,11 +130,16 @@ configure.
 
 ## Setup
 
-ferryGL needs Python 3.11 or later. Until the first release, install it from the repository:
+ferryGL needs Python 3.11 or later. Install the `ferrygl` command with any of:
 
 ```console
-$ uv tool install git+https://github.com/ao-batouche/ferryGL
+$ pipx install ferrygl
+$ uv tool install ferrygl
+$ pip install ferrygl
 ```
+
+To try unreleased changes, install from the repository instead, for example
+`uv tool install git+https://github.com/ao-batouche/ferryGL`.
 
 **1. A GitHub token that can read the repositories.** ferryGL only reads issues and pull
 requests. For each route it uses, in order:
