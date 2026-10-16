@@ -2093,6 +2093,434 @@ body[data-page="docs"] .site-nav .nav-docs {
   color: var(--text-muted);
 }
 
+/* Run diagram (site/_runflow.html, drawn by main.js) */
+
+.runflow {
+  --runflow-step: var(--text-subtle);
+  --runflow-read: var(--accent-to);
+  --runflow-write: var(--status-progress);
+  margin: 28px 0 32px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.runflow-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.runflow-play {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: 600 0.86rem/1.2 var(--font-sans);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.runflow-play:hover {
+  border-color: var(--brand);
+}
+
+.runflow-play:focus-visible,
+.runflow-switch input:focus-visible + .runflow-switch-track {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+
+.runflow-play svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}
+
+.runflow-play .icon-stop,
+.runflow-play[aria-pressed="true"] .icon-play {
+  display: none;
+}
+
+.runflow-play[aria-pressed="true"] .icon-stop {
+  display: block;
+}
+
+.runflow-play[aria-pressed="true"] {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.runflow-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+.runflow-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.runflow-switch-track {
+  position: relative;
+  flex: none;
+  width: 32px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--border-strong);
+  transition: background-color 0.2s ease;
+}
+
+.runflow-switch-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease;
+}
+
+.runflow-switch input:checked + .runflow-switch-track {
+  background: var(--brand);
+}
+
+.runflow-switch input:checked + .runflow-switch-track::after {
+  transform: translateX(14px);
+}
+
+.prose .runflow-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0 0 0 auto;
+  padding: 0;
+  list-style: none;
+  color: var(--text-subtle);
+  font-size: 0.8rem;
+}
+
+.prose .runflow-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.runflow-legend li::before {
+  content: "";
+  width: 16px;
+  border-top: 2px dashed var(--runflow-step);
+}
+
+.runflow-legend .is-read::before {
+  border-color: var(--runflow-read);
+}
+
+.runflow-legend .is-write::before {
+  border-color: var(--runflow-write);
+}
+
+.runflow-canvas {
+  padding: 14px 12px 6px;
+}
+
+.runflow-canvas svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.runflow-canvas.is-narrow svg {
+  max-width: 420px;
+}
+
+.runflow-group {
+  fill: var(--brand-soft);
+  fill-opacity: 0.35;
+  stroke: var(--border-strong);
+  stroke-dasharray: 4 5;
+}
+
+.runflow-group-label {
+  fill: var(--text-subtle);
+  font: 600 11px var(--font-mono);
+}
+
+.runflow-node {
+  cursor: pointer;
+  outline: none;
+  transition: opacity 0.2s ease;
+}
+
+.runflow-node rect {
+  fill: var(--surface);
+  stroke: var(--border-strong);
+  stroke-width: 1.25;
+  transition:
+    fill 0.2s ease,
+    stroke 0.2s ease,
+    stroke-width 0.2s ease;
+}
+
+.runflow-node--external rect {
+  fill: var(--surface-2);
+}
+
+.runflow-node:hover rect,
+.runflow-node.is-current rect {
+  fill: var(--brand-soft);
+  stroke: var(--brand);
+  stroke-width: 2;
+}
+
+.runflow-node:focus-visible rect {
+  stroke: var(--link);
+  stroke-width: 2.5;
+}
+
+.runflow-node-title {
+  fill: var(--text);
+  font: 700 15px var(--font-sans);
+}
+
+.runflow-node-sub {
+  fill: var(--text-subtle);
+  font: 500 12px var(--font-sans);
+}
+
+.runflow-badge circle {
+  fill: var(--surface);
+  stroke: var(--border-strong);
+}
+
+.runflow-badge text {
+  fill: var(--text-muted);
+  font: 700 10px var(--font-sans);
+}
+
+.runflow-node.is-current .runflow-badge circle {
+  fill: var(--brand);
+  stroke: var(--brand);
+}
+
+.runflow-node.is-current .runflow-badge text {
+  fill: var(--navy);
+}
+
+.runflow-edge {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.runflow-edge-line {
+  stroke: var(--runflow-step);
+  stroke-width: 1.75;
+  stroke-dasharray: 5 5;
+  animation: runflow-dash 1.1s linear infinite;
+  transition: stroke-width 0.2s ease;
+}
+
+.runflow-edge-head {
+  fill: var(--runflow-step);
+}
+
+.runflow-edge--read .runflow-edge-line {
+  stroke: var(--runflow-read);
+}
+
+.runflow-edge--read .runflow-edge-head {
+  fill: var(--runflow-read);
+}
+
+.runflow-edge--write .runflow-edge-line {
+  stroke: var(--runflow-write);
+}
+
+.runflow-edge--write .runflow-edge-head {
+  fill: var(--runflow-write);
+}
+
+.runflow-edge:hover .runflow-edge-line,
+.runflow-edge.is-related .runflow-edge-line {
+  stroke-width: 2.75;
+}
+
+.runflow-edge-hit {
+  stroke: transparent;
+  stroke-width: 18;
+  pointer-events: stroke;
+}
+
+.runflow-edge-label {
+  fill: var(--text-muted);
+  font: 500 11.5px var(--font-sans);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+@keyframes runflow-dash {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+.runflow.has-focus .runflow-node:not(.is-related),
+.runflow.has-focus .runflow-edge:not(.is-related) {
+  opacity: 0.25;
+}
+
+.runflow-node.is-off rect {
+  stroke-dasharray: 4 4;
+}
+
+.runflow-node.is-off,
+.runflow-edge.is-off {
+  opacity: 0.4;
+}
+
+.runflow-edge.is-off .runflow-edge-line {
+  animation: none;
+}
+
+.runflow-packet {
+  fill: var(--brand);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.runflow-packet--read {
+  fill: var(--runflow-read);
+}
+
+.runflow-packet--write {
+  fill: var(--runflow-write);
+}
+
+.runflow-panel {
+  min-height: 148px;
+  padding: 14px 18px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.runflow-panel.is-fresh {
+  animation: runflow-fade 0.25s ease;
+}
+
+@keyframes runflow-fade {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+.prose .runflow-panel p {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+}
+
+.prose .runflow-panel .runflow-title {
+  margin-bottom: 4px;
+  color: var(--text);
+  font-size: 1.02rem;
+  font-weight: 700;
+}
+
+.prose .runflow-panel .runflow-hint {
+  margin: 0;
+  color: var(--text-subtle);
+}
+
+.runflow-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.prose .runflow-panel .runflow-kicker {
+  margin-bottom: 6px;
+}
+
+.runflow-kicker span {
+  margin-right: 4px;
+  color: var(--link);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.prose .runflow-kicker code {
+  font-size: 0.76rem;
+}
+
+.prose .runflow-panel .runflow-off {
+  color: var(--status-progress);
+  font-weight: 600;
+}
+
+.runflow-io {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 14px;
+  margin: 8px 0 0;
+  font-size: 0.86rem;
+}
+
+.runflow-io dt {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.runflow-io dd {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.prose .runflow-noscript {
+  margin: 0;
+  padding: 0 18px 16px;
+  color: var(--text-subtle);
+}
+
+@media (max-width: 640px) {
+  .prose .runflow-legend {
+    margin-left: 0;
+  }
+
+  .runflow-panel {
+    min-height: 0;
+    padding: 12px 14px 14px;
+  }
+}
+
 /* Responsive */
 
 @media (max-width: 1080px) {
@@ -2290,5 +2718,10 @@ body[data-page="docs"] .site-nav .nav-docs {
   *::before,
   *::after {
     transition: none !important;
+  }
+
+  .runflow-edge-line,
+  .runflow-panel.is-fresh {
+    animation: none;
   }
 }

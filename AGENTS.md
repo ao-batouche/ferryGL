@@ -140,7 +140,10 @@ The website (https://oussamabatouche.com/ferryGL/) is rebuilt from `docs/` whene
 or `site/` changes on `main`, so a page changed in `docs/` needs no other edit. A new page
 needs a link in `docs/README.md`, which sets the order of the sidebar. The home page,
 `site/index.html`, is written by hand: update it when the README's summary, status table or
-quick start changes. To preview, run `python3 site/build.py` and
+quick start changes. The run diagram in `docs/architecture.md` has two versions: a Mermaid
+block for GitHub, and on the website the interactive `site/_runflow.html`, whose texts and
+layout are a JSON model drawn by `site/main.js`. Update both when the steps of a run, or what
+they read and write, change. To preview, run `python3 site/build.py` and
 `python3 -m http.server --directory _site`. The build fails on a link to a missing page or
 anchor, and pull requests that touch `docs/` or `site/` run it.
 
