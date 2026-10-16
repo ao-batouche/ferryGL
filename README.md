@@ -251,6 +251,10 @@ $ uv run pytest
 $ uv run ruff check && uv run ruff format --check
 ```
 
+Before changing ferryGL, read [AGENTS.md](AGENTS.md): it lists the invariants, the data
+ferryGL leaves in users' Linear workspaces, and the testing and review rules for
+contributors and coding agents.
+
 ## Not planned
 
 - Writing anything to GitHub: comments, labels or status.
