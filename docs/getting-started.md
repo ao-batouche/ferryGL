@@ -56,8 +56,14 @@ a repository, check that first.
 
 ## 3. Give ferryGL a Linear API key
 
-Create a personal API key in [Linear's API settings](https://linear.app/settings/api) with
-read and write access. You can limit it to the teams ferryGL writes to.
+Create a personal API key in Linear's
+[Security & access settings](https://linear.app/settings/account/security) (Settings >
+Account > Security & access) with read and write access. You can limit it to the teams
+ferryGL writes to.
+
+You don't need to be a workspace admin. If Linear won't let you create a key there, your
+workspace admins have turned off member API keys: ask one of them to turn on *Member API keys*
+in Settings > Administration > API.
 
 Give it to ferryGL in one of two ways:
 

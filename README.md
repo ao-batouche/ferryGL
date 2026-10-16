@@ -88,8 +88,9 @@ workspace.
 2. Sign in to GitHub with the [GitHub CLI](https://cli.github.com/) (`gh auth login`), or set
    `GH_TOKEN` to a token that can read the repositories.
 
-3. Create a personal API key in [Linear's API settings](https://linear.app/settings/api), and
-   set `LINEAR_API_KEY` to it.
+3. Create a personal API key in Linear's
+   [Security & access settings](https://linear.app/settings/account/security), and set
+   `LINEAR_API_KEY` to it.
 
 4. Write `~/.config/ferrygl/ferrygl.toml`:
 
