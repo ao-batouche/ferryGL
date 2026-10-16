@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/ferrygl-logo-horizontal.png" alt="ferryGL" width="560">
+  <img src="https://raw.githubusercontent.com/ao-batouche/ferryGL/main/assets/ferrygl-logo-horizontal.png" alt="ferryGL" width="560">
 </p>
 
 # ferryGL
@@ -44,7 +44,7 @@ Each time you run it, ferryGL:
    | Pull request closed unmerged, or issue closed as not planned | Canceled |
 
    An issue's Linear issue follows its pull request until the issue itself is closed. The
-   [sync rules](docs/sync-rules.md#status-rules) cover every case, and the status names are
+   [sync rules](https://oussamabatouche.com/ferryGL/docs/sync-rules.html#status-rules) cover every case, and the status names are
    configurable.
 
 It's built to be safe in repositories that belong to someone else:
@@ -119,20 +119,21 @@ workspace.
    3 changes (1 adopt, 1 link, 1 update). Run with --apply to make them.
    ```
 
-[Getting started](docs/getting-started.md) walks through the same steps in more detail.
+[Getting started](https://oussamabatouche.com/ferryGL/docs/getting-started.html) walks through the same steps in more detail.
 
 ## Documentation
 
-The documentation is also on the website, at https://oussamabatouche.com/ferryGL/.
+The documentation is on the website, at https://oussamabatouche.com/ferryGL/. Its source is in
+[`docs/`](https://github.com/ao-batouche/ferryGL/tree/main/docs).
 
 | Page | What's in it |
 |---|---|
-| [Getting started](docs/getting-started.md) | Install, credentials, and a careful first run |
-| [Configuration](docs/configuration.md) | Every setting in `ferrygl.toml` |
-| [Sync rules](docs/sync-rules.md) | Which items are synced, how they map to Linear issues, and how statuses move |
-| [Commands](docs/commands.md) | `check` and `sync`, reading the plan, exit statuses, schedules, troubleshooting |
-| [Data and privacy](docs/data-and-privacy.md) | What ferryGL reads, what it writes to Linear, and what it keeps |
-| [Architecture](docs/architecture.md) | How a run works inside, request costs, retries and limits |
+| [Getting started](https://oussamabatouche.com/ferryGL/docs/getting-started.html) | Install, credentials, and a careful first run |
+| [Configuration](https://oussamabatouche.com/ferryGL/docs/configuration.html) | Every setting in `ferrygl.toml` |
+| [Sync rules](https://oussamabatouche.com/ferryGL/docs/sync-rules.html) | Which items are synced, how they map to Linear issues, and how statuses move |
+| [Commands](https://oussamabatouche.com/ferryGL/docs/commands.html) | `check` and `sync`, reading the plan, exit statuses, schedules, troubleshooting |
+| [Data and privacy](https://oussamabatouche.com/ferryGL/docs/data-and-privacy.html) | What ferryGL reads, what it writes to Linear, and what it keeps |
+| [Architecture](https://oussamabatouche.com/ferryGL/docs/architecture.html) | How a run works inside, request costs, retries and limits |
 
 ## What it doesn't do
 
@@ -150,9 +151,9 @@ $ uv run pytest
 $ uv run ruff check && uv run ruff format --check
 ```
 
-Read [AGENTS.md](AGENTS.md) before changing ferryGL. It lists the rules that keep users'
+Read [AGENTS.md](https://github.com/ao-batouche/ferryGL/blob/main/AGENTS.md) before changing ferryGL. It lists the rules that keep users'
 data safe, and how changes are tested and reviewed.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](https://github.com/ao-batouche/ferryGL/blob/main/LICENSE)

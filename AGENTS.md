@@ -142,8 +142,11 @@ anchor, and pull requests that touch `docs/` or `site/` run it.
 
 - Work on a branch and open a pull request against `main`. Keep each pull request to one
   concern, and say in its description what changed for users and how it was tested.
-- Never push to `main` directly. GitHub can't enforce this while the repository is private on
-  a free plan, so a local `pre-push` hook may block it; don't bypass it with `--no-verify`.
+- Never push to `main` directly. GitHub doesn't enforce this, so a local `pre-push` hook may
+  block it; don't bypass it with `--no-verify`.
+- Commits use the owner's GitHub noreply address. GitHub's merge buttons record the merging
+  account's email instead, unless that account keeps its email private, so check the author
+  and committer of new commits on `main` after a merge.
 - This checkout may have a repo-local git identity and credential helper. Don't change them.
   When the machine has several GitHub accounts, run `gh` as the repository owner's account,
   for example `GH_TOKEN=$(gh auth token --user <owner>) gh ...`.
