@@ -10,9 +10,19 @@ from typing import Any
 class Kind(StrEnum):
     """What a GitHub item is to you."""
 
-    ISSUE = "issue"  # an issue assigned to you
+    ISSUE = "issue"  # an issue you created or are assigned to
     PR = "pr"  # a pull request you opened
-    REVIEW = "review"  # someone else's pull request you reviewed or were asked to review
+    INVOLVED = "involved"  # someone else's pull request you review, are assigned to or commit to
+
+
+class Role(StrEnum):
+    """How your account relates to an item. An item can have several roles."""
+
+    AUTHOR = "author"  # you created it
+    ASSIGNEE = "assignee"
+    REVIEWER = "reviewer"  # you submitted at least one review
+    REQUESTED = "requested"  # your review is currently requested
+    COMMITTER = "committer"  # you wrote at least one of its commits
 
 
 def item_key(repo: str, number: int) -> str:
@@ -44,8 +54,7 @@ class GitHubItem:
     is_draft: bool = False
     body: str = ""
     references: tuple[ItemRef, ...] = ()  # pull requests: issues they close or mention
-    reviewed: bool = False  # reviews: you submitted at least one review
-    requested: bool = False  # reviews: your review is currently requested
+    roles: frozenset[Role] = frozenset()
 
     @property
     def key(self) -> str:

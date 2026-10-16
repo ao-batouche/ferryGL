@@ -24,19 +24,29 @@ progress. ferryGL does that for you with your own credentials. It never writes t
 
 ## What it does
 
-On each run, ferryGL searches GitHub for your activity in the repositories you list, and
-makes sure each item has exactly one Linear issue, assigned to you, with the right status.
+On each run, ferryGL finds every issue and pull request your GitHub account is part of in
+the repositories you list, and makes sure each one has exactly one Linear issue, assigned to
+you, with the right status.
 
-| GitHub item | GitHub search | Default Linear title |
+| Your role on GitHub | How ferryGL finds it | Default Linear title |
 |---|---|---|
-| Issues assigned to you | `is:issue assignee:<you>` | `{title} #{number}` |
-| Pull requests you opened | `is:pr author:<you>` | `{title} - #{number}` |
-| Pull requests you reviewed | `is:pr reviewed-by:<you> -author:<you>` | `[PR] {title} - #{number}` |
-| Pull requests waiting for your review | `is:pr user-review-requested:<you>` | `[PR] {title} - #{number}` |
+| You created an issue, or are assigned to it | `is:issue author:<you>`, `is:issue assignee:<you>` | `{title} #{number}` |
+| You opened a pull request | `is:pr author:<you>` | `{title} - #{number}` |
+| You're assigned to someone else's pull request | `is:pr assignee:<you>` | `[PR] {title} - #{number}` |
+| You reviewed it, or your review is requested | `reviewed-by:<you>`, `user-review-requested:<you>` | `[PR] {title} - #{number}` |
+| You wrote one of its commits | the commit authors of each pull request | `[PR] {title} - #{number}` |
 
-A pull request you opened that refers to an issue assigned to you, through a closing keyword
+An item you have several roles on still gets one Linear issue. In the config, someone else's
+pull request you're part of is an `involved` item.
+
+GitHub search can't find pull requests by commit author, so ferryGL reads every pull request
+in the route updated since `since` and checks the authors, including co-authors, of its first
+100 commits. That's the slowest part of a run. Set `since`, or turn it off with
+`prs_with_commits = false`.
+
+A pull request you opened that refers to one of your synced issues, through a closing keyword
 such as `Fixes #252` or a plain `#252` in its title or description, is linked to that
-issue's Linear issue instead of getting its own. Pull requests you review always get their
+issue's Linear issue instead of getting its own. Someone else's pull request always gets its
 own Linear issue.
 
 For example, you're assigned `acme/api#252` and open `acme/api#335`, whose description says
@@ -66,8 +76,10 @@ Linear state names are configurable. These are the defaults:
 | Your pull request is open | In Review |
 | Pull request merged | Done |
 | Pull request closed without merging | Canceled |
-| Your review is requested, including again after you reviewed | Todo |
-| You reviewed, no new request, pull request still open | In Review |
+| Someone else's: your review is requested, including again after you reviewed | Todo |
+| Someone else's: you reviewed, no new request, still open | In Review |
+| Someone else's, assigned to you or with your commits: draft | In Progress |
+| Someone else's, assigned to you or with your commits: open | In Review |
 
 **Your edits win.** ferryGL records the GitHub state it last acted on in the link's metadata
 on the Linear issue, and changes the Linear status only when that GitHub state changes. If
@@ -157,12 +169,13 @@ github_user = "alice"
 [sync]
 since = 2026-09-01            # ignore items not updated since this date
 label = "ferryGL"             # optional: an existing label added to every issue ferryGL creates
-# issues_assigned, prs_authored, prs_reviewed and review_requests are all true by default
+# Roles, all true by default: issues_assigned, issues_created, prs_created, prs_assigned,
+# prs_reviewed, review_requests, prs_with_commits
 
 [titles]                      # use "{repo}#{number}" to keep titles out of Linear
 issue = "{title} #{number}"
 pr = "{title} - #{number}"
-review = "[PR] {title} - #{number}"
+involved = "[PR] {title} - #{number}"
 
 [copy]
 description = false
@@ -191,9 +204,9 @@ teams, projects, states and label exist. `sync` on its own only prints the plan,
 example:
 
 ```text
-acme/api#252  issue   update  ENG-7 Todo -> In Review
-acme/api#335  pr      link    -> ENG-7
-acme/api#348  review  adopt   -> ENG-9
+acme/api#252  issue     update  ENG-7 Todo -> In Review
+acme/api#335  pr        link    -> ENG-7
+acme/api#348  involved  adopt   -> ENG-9
 3 changes (1 adopt, 1 link, 1 update). Run with --apply to make them.
 ```
 
@@ -266,8 +279,8 @@ contributors and coding agents.
 
 ## Open questions
 
-- Should ferryGL also pick up pull requests you pushed commits to without opening or reviewing
-  them? GitHub search has no qualifier for that, so it costs extra requests.
+- Should commenting on an item, or being mentioned in it, count as a role? Today they don't,
+  because they'd pull in many items you only touched in passing.
 
 ## License
 

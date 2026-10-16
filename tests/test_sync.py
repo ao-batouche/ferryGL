@@ -78,7 +78,7 @@ class FakeGitHub:
     def can_read(self, repo):
         return self.readable
 
-    def search(self, query):
+    def search(self, query, with_commits=False):
         for marker, nodes in self.results.items():
             if marker in query:
                 return nodes
@@ -105,8 +105,8 @@ def test_dry_run_prints_the_plan_and_writes_nothing():
     code, out, _ = sync(make_config(), linear, github)
 
     assert code == EXIT_OK
-    assert 'acme/api#12  issue   create  "Issue 12 #12" -> Todo' in out
-    assert 'acme/api#15  pr      create  "PR 15 - #15" -> In Review' in out
+    assert 'acme/api#12  issue     create  "Issue 12 #12" -> Todo' in out
+    assert 'acme/api#15  pr        create  "PR 15 - #15" -> In Review' in out
     assert "2 changes (2 create). Run with --apply to make them." in out
     assert linear.writes == []
 

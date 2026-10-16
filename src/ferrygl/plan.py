@@ -26,6 +26,7 @@ from ferrygl.model import (
     Kind,
     LinearIssue,
     Link,
+    Role,
     item_key,
 )
 
@@ -67,14 +68,16 @@ def github_state(item: GitHubItem, linked_prs: Sequence[GitHubItem] = ()) -> Git
         return GitHubState(f"{kind}:merged", "done", "done")
     if item.state == "CLOSED":
         return GitHubState(f"{kind}:closed", "canceled", "canceled")
-    if item.kind is Kind.PR:
-        if item.is_draft:
-            return GitHubState("pr:draft", "in_progress", "in_progress")
-        return GitHubState("pr:open", "in_review", "in_review")
-    # A request after your review (such as a re-request) means it's your turn again.
-    if item.requested:
-        return GitHubState("review:requested", "todo", "todo")
-    return GitHubState("review:reviewed", "in_review", "in_review")
+    if item.kind is Kind.INVOLVED:
+        # A request, including one after your review, means it's your turn.
+        if Role.REQUESTED in item.roles:
+            return GitHubState("involved:requested", "todo", "todo")
+        if Role.REVIEWER in item.roles:
+            return GitHubState("involved:reviewed", "in_review", "in_review")
+    # Your pull request, or one you're assigned to or commit to, follows its own state.
+    if item.is_draft:
+        return GitHubState(f"{kind}:draft", "in_progress", "in_progress")
+    return GitHubState(f"{kind}:open", "in_review", "in_review")
 
 
 @dataclass(frozen=True)
@@ -99,7 +102,7 @@ class _Planner:
         self.names = inp.config.status
         self.issues = [i for i in inp.items if i.kind is Kind.ISSUE]
         self.prs = [i for i in inp.items if i.kind is Kind.PR]
-        self.reviews = [i for i in inp.items if i.kind is Kind.REVIEW]
+        self.involved = [i for i in inp.items if i.kind is Kind.INVOLVED]
         self.known_prs = {i.key for i in inp.items if i.kind is not Kind.ISSUE}
         issue_keys = {issue.key for issue in self.issues}
         # Pull request key -> keys of synced issues it refers to.
@@ -154,7 +157,7 @@ class _Planner:
         for issue in self.issues:
             linked, rides, join = self.linked[issue.key], riders[issue.key], joins.get(issue.key)
             changes += self.unit(issue, linked, rides, join)
-        for item in [*solo_prs, *self.reviews]:
+        for item in [*solo_prs, *self.involved]:
             changes += self.unit(item, (), ())
         return changes
 

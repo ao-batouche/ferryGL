@@ -4,9 +4,9 @@ These rules are for anyone changing ferryGL, including coding agents. Read the
 [README](README.md) first: it is the user-facing contract for behavior, configuration and
 limits. This file adds the invariants, layout and workflow that keep changes safe.
 
-ferryGL copies a person's GitHub work (issues assigned to them, pull requests they opened,
-reviewed or were asked to review) one way into their own Linear workspace, using only their
-own credentials. Its users usually work in repositories owned by someone else, often private,
+ferryGL copies every issue and pull request a person's GitHub account is part of (created,
+assigned, reviewed, review requested, or with their commits) one way into their own Linear
+workspace, using only their own credentials. Its users usually work in repositories owned by someone else, often private,
 so the safety rules below matter more than features.
 
 ## Invariants
@@ -43,7 +43,7 @@ Users' Linear workspaces keep what ferryGL writes, so treat these as compatibili
 - **Link metadata** uses flat keys with string or number values, because Linear documents
   attachment metadata that way:
   - `ferrygl_v`: format version, currently `1`
-  - `ferrygl_kind`: `issue`, `pr` or `review`
+  - `ferrygl_kind`: `issue`, `pr` (one you opened) or `involved` (someone else's)
   - `ferrygl_state`: the GitHub state key ferryGL last acted on
   - `ferrygl_synced_at`: ISO timestamp of that state
   - `ferrygl_linked_to`: on links of pull requests that ride with an issue, such as
@@ -53,8 +53,9 @@ Users' Linear workspaces keep what ferryGL writes, so treat these as compatibili
 - **State keys** (`github_state` in `plan.py`): `issue:open`, `issue:open:pr_draft`,
   `issue:open:pr_open`, `issue:open:pr_merged`, `issue:closed:completed`,
   `issue:closed:not_planned`, `pr:draft`, `pr:open`, `pr:merged`, `pr:closed`,
-  `review:requested`, `review:reviewed`, `review:merged`, `review:closed`. Renaming one makes
-  every recorded link look changed. Add a key, or bump `ferrygl_v` and handle the old value.
+  `involved:requested`, `involved:reviewed`, `involved:draft`, `involved:open`,
+  `involved:merged`, `involved:closed`. Renaming one makes every recorded link look changed.
+  Add a key, or bump `ferrygl_v` and handle the old value.
 - **Config keys** (`config.py`): unknown keys are rejected, so adding a key is safe but
   renaming or removing one breaks existing files. Keep the old name working, with a clear
   error or warning, for at least one release.
@@ -67,11 +68,11 @@ Users' Linear workspaces keep what ferryGL writes, so treat these as compatibili
 | Path | Responsibility |
 |---|---|
 | `src/ferrygl/config.py` | Parse and validate `ferrygl.toml` into frozen dataclasses |
-| `src/ferrygl/github.py` | Resolve tokens, run GitHub searches, parse items and issue references |
+| `src/ferrygl/github.py` | Resolve tokens, run one GitHub search per role, scan commit authors, parse items |
 | `src/ferrygl/linear.py` | Linear GraphQL reads and writes with a personal API key |
 | `src/ferrygl/plan.py` | Pure planning: GitHub items + existing Linear state -> changes |
 | `src/ferrygl/sync.py` | `check` and `sync`: resolve routes, plan, print, apply |
-| `src/ferrygl/model.py` | Shared dataclasses: `GitHubItem`, `LinearIssue`, `Attachment`, `Change` |
+| `src/ferrygl/model.py` | Shared types: `Kind`, `Role`, `GitHubItem`, `LinearIssue`, `Attachment`, `Change` |
 | `src/ferrygl/_http.py` | JSON POST with retries for both clients |
 | `tests/builders.py` | Builders for synthetic items, Linear issues and links |
 
@@ -118,6 +119,8 @@ issues and pull requests. Mark planned features as planned.
 
 - Work on a branch and open a pull request against `main`. Keep each pull request to one
   concern, and say in its description what changed for users and how it was tested.
+- Never push to `main` directly. GitHub can't enforce this while the repository is private on
+  a free plan, so a local `pre-push` hook may block it; don't bypass it with `--no-verify`.
 - This checkout may have a repo-local git identity and credential helper. Don't change them.
   When the machine has several GitHub accounts, run `gh` as the repository owner's account,
   for example `GH_TOKEN=$(gh auth token --user <owner>) gh ...`.
@@ -141,5 +144,7 @@ issues and pull requests. Mark planned features as planned.
   exercised against a real repository. Reads and writes against a real Linear workspace
   haven't been exercised yet, so do a read-only preview before the first release.
 - Planned: a scheduled GitHub Actions template and a first PyPI release.
-- Open question: whether to pick up pull requests the user pushed commits to without opening
-  or reviewing them. GitHub search has no qualifier for that.
+- Finding pull requests with the user's commits scans every pull request in scope, because
+  GitHub search has no commit-author qualifier for pull requests. Keep that scan bounded by
+  `since`, and watch its cost when changing it.
+- Open question: whether comments or mentions should count as roles.

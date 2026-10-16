@@ -42,12 +42,28 @@ class Route:
         return None
 
 
+SYNC_FLAGS = (
+    "issues_assigned",
+    "issues_created",
+    "prs_created",
+    "prs_assigned",
+    "prs_reviewed",
+    "review_requests",
+    "prs_with_commits",
+)
+
+
 @dataclass(frozen=True)
 class SyncOptions:
+    """Which of your roles on GitHub bring an item into Linear. All are on by default."""
+
     issues_assigned: bool = True
-    prs_authored: bool = True
+    issues_created: bool = True
+    prs_created: bool = True
+    prs_assigned: bool = True  # someone else's pull request assigned to you
     prs_reviewed: bool = True
     review_requests: bool = True
+    prs_with_commits: bool = True  # someone else's pull request with a commit you wrote
     since: date | None = None
     label: str | None = None
 
@@ -56,7 +72,7 @@ class SyncOptions:
 class Titles:
     issue: str = "{title} #{number}"
     pr: str = "{title} - #{number}"
-    review: str = "[PR] {title} - #{number}"
+    involved: str = "[PR] {title} - #{number}"
 
 
 @dataclass(frozen=True)
@@ -172,7 +188,7 @@ def _covers(pattern: str, repo: str) -> bool:
 
 
 def _sync(raw: dict[str, Any], where: str) -> SyncOptions:
-    flags = ("issues_assigned", "prs_authored", "prs_reviewed", "review_requests")
+    flags = SYNC_FLAGS
     _check_keys(raw, {*flags, "since", "label"}, where)
     since = raw.get("since")
     if isinstance(since, datetime):
@@ -192,10 +208,10 @@ def _sync(raw: dict[str, Any], where: str) -> SyncOptions:
 
 
 def _titles(raw: dict[str, Any], where: str) -> Titles:
-    _check_keys(raw, {"issue", "pr", "review"}, where)
+    _check_keys(raw, {"issue", "pr", "involved"}, where)
     defaults = Titles()
     values = {}
-    for key in ("issue", "pr", "review"):
+    for key in ("issue", "pr", "involved"):
         value = raw.get(key, getattr(defaults, key))
         if not isinstance(value, str) or not value.strip():
             raise ConfigError(f"{where}: `{key}` must be a non-empty string")

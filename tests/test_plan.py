@@ -7,6 +7,7 @@ from builders import (
     VIEWER,
     attachment,
     config,
+    involved,
     issue,
     linear_issue,
     pr,
@@ -14,7 +15,7 @@ from builders import (
 )
 
 from ferrygl.config import Config
-from ferrygl.model import Action, Attachment, Change, GitHubItem, LinearIssue
+from ferrygl.model import Action, Attachment, Change, GitHubItem, LinearIssue, Role
 from ferrygl.plan import PlanInput, github_state, plan
 
 
@@ -104,9 +105,24 @@ def test_a_new_review_request_after_your_review_moves_it_back_to_todo():
     home = linear_issue("ENG-1", state="In Review")
     item = review(20, reviewed=True, requested=True)
 
-    changes = run([item], [attachment(item, home, recorded="review:reviewed")])
+    changes = run([item], [attachment(item, home, recorded="involved:reviewed")])
 
     assert summary(changes) == [("update", "acme/api#20", "ENG-1", "Todo")]
+
+
+def test_issue_you_created_is_synced_like_an_assigned_one():
+    [change] = run([issue(12, roles=frozenset({Role.AUTHOR}))])
+
+    assert summary([change]) == [("create", "acme/api#12", None, "Todo")]
+    assert change.links[0].metadata["ferrygl_kind"] == "issue"
+
+
+def test_pull_request_with_your_commits_gets_an_involved_issue():
+    [change] = run([involved(40, Role.COMMITTER)])
+
+    assert summary([change]) == [("create", "acme/api#40", None, "In Review")]
+    assert change.title == "[PR] PR 40 - #40"
+    assert change.links[0].metadata["ferrygl_kind"] == "involved"
 
 
 def test_title_templates_come_from_config():
@@ -197,7 +213,7 @@ def test_linear_issue_assigned_to_someone_else_is_not_touched():
     theirs = linear_issue("ENG-7", state="Todo", assignee=OTHER)
     item = review(20, reviewed=True)
 
-    changes = run([item], [attachment(item, theirs, recorded="review:requested")])
+    changes = run([item], [attachment(item, theirs, recorded="involved:requested")])
 
     assert summary(changes) == [("create", "acme/api#20", None, "In Review")]
 
@@ -426,7 +442,23 @@ def test_pull_request_with_its_own_linear_issue_stays_there():
         (issue(1), [pr(2, state="MERGED")], "issue:open:pr_merged", None, "in_review"),
         (issue(1), [pr(2, state="CLOSED")], "issue:open", "todo", "todo"),
         (pr(2, state="CLOSED"), [], "pr:closed", "canceled", "canceled"),
-        (review(3, state="MERGED"), [], "review:merged", "done", "done"),
+        (review(3, state="MERGED"), [], "involved:merged", "done", "done"),
+        (involved(3, Role.COMMITTER), [], "involved:open", "in_review", "in_review"),
+        (
+            involved(3, Role.ASSIGNEE, draft=True),
+            [],
+            "involved:draft",
+            "in_progress",
+            "in_progress",
+        ),
+        (
+            involved(3, Role.COMMITTER, Role.REVIEWER),
+            [],
+            "involved:reviewed",
+            "in_review",
+            "in_review",
+        ),
+        (involved(3, Role.REVIEWER, Role.REQUESTED), [], "involved:requested", "todo", "todo"),
     ],
 )
 def test_github_state(item, linked, key, on_change, on_create):

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from ferrygl.config import Config, Route
-from ferrygl.model import Attachment, GitHubItem, ItemRef, Kind, LinearIssue
+from ferrygl.model import Attachment, GitHubItem, ItemRef, Kind, LinearIssue, Role
 
 REPO = "acme/api"
 VIEWER = "user-me"
@@ -26,7 +26,11 @@ def url(kind: Kind, number: int, repo: str = REPO) -> str:
 
 
 def issue(
-    number: int, state: str = "OPEN", reason: str | None = None, repo: str = REPO
+    number: int,
+    state: str = "OPEN",
+    reason: str | None = None,
+    repo: str = REPO,
+    roles: frozenset[Role] = frozenset({Role.ASSIGNEE}),
 ) -> GitHubItem:
     return GitHubItem(
         kind=Kind.ISSUE,
@@ -36,6 +40,7 @@ def issue(
         url=url(Kind.ISSUE, number, repo),
         state=state,
         state_reason=reason,
+        roles=roles,
     )
 
 
@@ -55,22 +60,31 @@ def pr(
         state=state,
         is_draft=draft,
         references=tuple(ItemRef(repo, ref) for ref in refs),
+        roles=frozenset({Role.AUTHOR}),
+    )
+
+
+def involved(number: int, *roles: Role, state: str = "OPEN", draft: bool = False) -> GitHubItem:
+    """Someone else's pull request, with your roles on it."""
+    return GitHubItem(
+        kind=Kind.INVOLVED,
+        repo=REPO,
+        number=number,
+        title=f"PR {number}",
+        url=url(Kind.PR, number),
+        state=state,
+        is_draft=draft,
+        roles=frozenset(roles or {Role.REQUESTED}),
     )
 
 
 def review(
     number: int, state: str = "OPEN", reviewed: bool = False, requested: bool | None = None
 ) -> GitHubItem:
-    return GitHubItem(
-        kind=Kind.REVIEW,
-        repo=REPO,
-        number=number,
-        title=f"PR {number}",
-        url=url(Kind.PR, number),
-        state=state,
-        reviewed=reviewed,
-        requested=(not reviewed) if requested is None else requested,
-    )
+    """Someone else's pull request you reviewed, or whose review is requested from you."""
+    requested = (not reviewed) if requested is None else requested
+    roles = [Role.REVIEWER] * reviewed + [Role.REQUESTED] * requested
+    return involved(number, *roles, state=state)
 
 
 def linear_issue(

@@ -281,7 +281,7 @@ def format_change(change: Change, width: int = 0) -> str:
     else:
         detail = change.note or ""
     kind, action = change.item.kind.value, change.action.value
-    return f"{change.item.label:<{width}}  {kind:<6}  {action:<6}  {detail}"
+    return f"{change.item.label:<{width}}  {kind:<8}  {action:<6}  {detail}"
 
 
 def _print_changes(changes: Sequence[Change], out: TextIO) -> None:

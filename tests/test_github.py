@@ -9,19 +9,16 @@ import pytest
 
 from ferrygl.config import Route, SyncOptions
 from ferrygl.github import (
-    ASSIGNED,
-    AUTHORED,
-    REQUESTED,
-    REVIEWED,
     GitHubClient,
     GitHubError,
     fetch_items,
+    has_commit_by,
     parse_node,
     references,
     resolve_token,
-    search_queries,
+    searches,
 )
-from ferrygl.model import ItemRef, Kind
+from ferrygl.model import ItemRef, Kind, Role
 
 
 def issue_node(number: int, state: str = "OPEN", reason: str | None = None) -> dict:
@@ -37,8 +34,15 @@ def issue_node(number: int, state: str = "OPEN", reason: str | None = None) -> d
     }
 
 
-def pr_node(number: int, body: str = "", closes: tuple[int, ...] = (), draft=False) -> dict:
-    return {
+def pr_node(
+    number: int,
+    body: str = "",
+    closes: tuple[int, ...] = (),
+    draft: bool = False,
+    author: str = "alice",
+    committers: tuple[str, ...] | None = None,
+) -> dict:
+    node = {
         "__typename": "PullRequest",
         "number": number,
         "title": f"PR {number}",
@@ -46,11 +50,20 @@ def pr_node(number: int, body: str = "", closes: tuple[int, ...] = (), draft=Fal
         "state": "OPEN",
         "isDraft": draft,
         "body": body,
+        "author": {"login": author},
         "repository": {"nameWithOwner": "acme/api"},
         "closingIssuesReferences": {
             "nodes": [{"number": n, "repository": {"nameWithOwner": "acme/api"}} for n in closes]
         },
     }
+    if committers is not None:
+        node["commits"] = {
+            "nodes": [
+                {"commit": {"authors": {"nodes": [{"user": {"login": c} if c else None}]}}}
+                for c in committers
+            ]
+        }
+    return node
 
 
 # References
@@ -73,82 +86,113 @@ def test_references_ignore_repo_and_url_numbers_as_local_mentions():
     assert [ref.key for ref in refs] == ["acme/web#5", "acme/web#6"]
 
 
-# Search queries
+# Searches
 
 
-def test_search_queries_cover_each_role_with_scope_and_since():
+def test_searches_cover_every_role_with_scope_and_since():
     route = Route(repos=("acme/api", "other/*"), team="ENG")
     sync = SyncOptions(since=date(2026, 9, 1))
 
-    queries = dict(search_queries(route, "alice", sync))
+    found = searches(route, "alice", sync)
 
     scope = "repo:acme/api user:other updated:>=2026-09-01"
-    assert queries == {
-        ASSIGNED: f"is:issue assignee:alice {scope}",
-        AUTHORED: f"is:pr author:alice {scope}",
-        REVIEWED: f"is:pr reviewed-by:alice -author:alice {scope}",
-        REQUESTED: f"is:pr user-review-requested:alice -author:alice {scope}",
-    }
+    assert [(s.role, s.query, s.issues, s.commits) for s in found] == [
+        (Role.ASSIGNEE, f"is:issue assignee:alice {scope}", True, False),
+        (Role.AUTHOR, f"is:issue author:alice {scope}", True, False),
+        (Role.AUTHOR, f"is:pr author:alice {scope}", False, False),
+        (Role.ASSIGNEE, f"is:pr assignee:alice -author:alice {scope}", False, False),
+        (Role.REVIEWER, f"is:pr reviewed-by:alice -author:alice {scope}", False, False),
+        (Role.REQUESTED, f"is:pr user-review-requested:alice -author:alice {scope}", False, False),
+        (Role.COMMITTER, f"is:pr -author:alice {scope}", False, True),
+    ]
 
 
 def test_disabled_roles_are_not_searched():
     route = Route(repos=("acme/api",), team="ENG")
-    sync = SyncOptions(prs_reviewed=False, review_requests=False)
+    sync = SyncOptions(
+        issues_created=False,
+        prs_assigned=False,
+        prs_reviewed=False,
+        review_requests=False,
+        prs_with_commits=False,
+    )
 
-    assert [role for role, _ in search_queries(route, "alice", sync)] == [ASSIGNED, AUTHORED]
+    found = searches(route, "alice", sync)
+
+    assert [(s.role, s.issues) for s in found] == [(Role.ASSIGNEE, True), (Role.AUTHOR, False)]
 
 
 # Parsing search results
 
 
 def test_parse_issue_and_pull_request_nodes():
-    issue = parse_node(issue_node(12, state="CLOSED", reason="COMPLETED"), ASSIGNED)
-    pr = parse_node(pr_node(15, body="Part of #12", closes=(9,), draft=True), AUTHORED)
-    review = parse_node(pr_node(20), REVIEWED)
+    issue = parse_node(issue_node(12, "CLOSED", "COMPLETED"), Role.ASSIGNEE, "alice", True)
+    pr = parse_node(
+        pr_node(15, "Part of #12", closes=(9,), draft=True), Role.AUTHOR, "alice", False
+    )
+    theirs = parse_node(pr_node(20, author="bob"), Role.REVIEWER, "alice", False)
 
     assert (issue.kind, issue.state, issue.state_reason) == (Kind.ISSUE, "CLOSED", "COMPLETED")
-    assert (pr.kind, pr.is_draft) == (Kind.PR, True)
+    assert issue.roles == {Role.ASSIGNEE}
+    assert (pr.kind, pr.is_draft, pr.roles) == (Kind.PR, True, {Role.AUTHOR})
     assert [ref.key for ref in pr.references] == ["acme/api#9", "acme/api#12"]
-    assert (review.kind, review.reviewed, review.requested) == (Kind.REVIEW, True, False)
-    assert review.references == ()
-    assert parse_node(pr_node(20), REQUESTED).requested is True
+    assert (theirs.kind, theirs.roles) == (Kind.INVOLVED, {Role.REVIEWER})
+
+
+def test_pull_request_kind_follows_its_author_case_insensitively():
+    assert parse_node(pr_node(15, author="Alice"), Role.ASSIGNEE, "alice", False).kind is Kind.PR
 
 
 def test_results_of_the_wrong_type_are_ignored():
-    assert parse_node(pr_node(15), ASSIGNED) is None
-    assert parse_node(issue_node(12), AUTHORED) is None
+    assert parse_node(pr_node(15), Role.ASSIGNEE, "alice", issues=True) is None
+    assert parse_node(issue_node(12), Role.AUTHOR, "alice", issues=False) is None
+
+
+def test_commit_authors_are_matched_case_insensitively_and_ghost_authors_skipped():
+    assert has_commit_by(pr_node(1, committers=("bob", "Alice")), "alice")
+    assert not has_commit_by(pr_node(1, committers=("bob", "")), "alice")
+    assert not has_commit_by(pr_node(1), "alice")
 
 
 class FakeSearch:
+    """Returns canned results for each search, matched by a distinctive query prefix."""
+
     def __init__(self, results: dict[str, list[dict]]) -> None:
         self.results = results
+        self.calls: list[tuple[str, bool]] = []
 
-    def search(self, query: str) -> list[dict]:
-        role = next(role for role, marker in MARKERS.items() if marker in query)
-        return self.results.get(role, [])
-
-
-MARKERS = {
-    ASSIGNED: "assignee:",
-    AUTHORED: "is:pr author:",
-    REVIEWED: "reviewed-by:",
-    REQUESTED: "user-review-requested:",
-}
+    def search(self, query: str, with_commits: bool = False) -> list[dict]:
+        self.calls.append((query, with_commits))
+        for prefix, nodes in self.results.items():
+            if query.startswith(prefix):
+                return nodes
+        return []
 
 
-def test_fetch_items_merges_what_each_review_search_found():
+def test_fetch_items_merges_every_role_found_for_an_item():
     client = FakeSearch(
-        {REVIEWED: [pr_node(20), pr_node(22)], REQUESTED: [pr_node(20), pr_node(21)]}
+        {
+            "is:issue assignee:": [issue_node(12)],
+            "is:issue author:": [issue_node(12), issue_node(13)],
+            "is:pr reviewed-by:": [pr_node(20, author="bob"), pr_node(22, author="bob")],
+            "is:pr user-review-requested:": [pr_node(20, author="bob")],
+            "is:pr -author:": [
+                pr_node(22, author="bob", committers=("alice",)),
+                pr_node(23, author="bob", committers=("carol",)),
+            ],
+        }
     )
     route = Route(repos=("acme/api",), team="ENG")
 
     items = fetch_items(client, route, "alice", SyncOptions())
 
-    assert [(i.number, i.kind, i.reviewed, i.requested) for i in items] == [
-        (20, Kind.REVIEW, True, True),  # reviewed, then asked again
-        (21, Kind.REVIEW, False, True),
-        (22, Kind.REVIEW, True, False),
+    assert [(i.number, i.kind, sorted(i.roles)) for i in items] == [
+        (12, Kind.ISSUE, [Role.ASSIGNEE, Role.AUTHOR]),
+        (13, Kind.ISSUE, [Role.AUTHOR]),
+        (20, Kind.INVOLVED, [Role.REQUESTED, Role.REVIEWER]),
+        (22, Kind.INVOLVED, [Role.COMMITTER, Role.REVIEWER]),
     ]
+    assert [with_commits for _, with_commits in client.calls] == [False] * 6 + [True]
 
 
 # Tokens
@@ -192,7 +236,7 @@ def test_token_errors_explain_what_to_do():
 # HTTP client
 
 
-def test_search_follows_pages():
+def test_search_follows_pages_and_asks_for_commits_only_when_needed():
     pages = [
         {"nodes": [issue_node(1)], "pageInfo": {"hasNextPage": True, "endCursor": "c1"}},
         {"nodes": [issue_node(2)], "pageInfo": {"hasNextPage": False, "endCursor": None}},
@@ -201,14 +245,17 @@ def test_search_follows_pages():
 
     def handler(request: httpx.Request) -> httpx.Response:
         body = json.loads(request.content)
-        seen.append(body["variables"]["after"])
+        seen.append(
+            (body["variables"]["after"], body["variables"]["first"], "commits" in body["query"])
+        )
         assert request.headers["Authorization"] == "Bearer secret"
-        return httpx.Response(200, json={"data": {"search": pages[len(seen) - 1]}})
+        return httpx.Response(200, json={"data": {"search": pages[(len(seen) - 1) % 2]}})
 
     client = GitHubClient("secret", http=httpx.Client(transport=httpx.MockTransport(handler)))
 
     assert [n["number"] for n in client.search("is:issue")] == [1, 2]
-    assert seen == [None, "c1"]
+    client.search("is:pr", with_commits=True)
+    assert seen == [(None, 50, False), ("c1", 50, False), (None, 25, True), ("c1", 25, True)]
 
 
 def test_rejected_token_is_reported_plainly():
