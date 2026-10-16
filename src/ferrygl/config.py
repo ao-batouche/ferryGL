@@ -218,7 +218,7 @@ def _titles(raw: dict[str, Any], where: str) -> Titles:
         if not isinstance(value, str) or not value.strip():
             raise ConfigError(f"{where}: `{key}` must be a non-empty string")
         try:
-            fields = {f for _, f, _, _ in string.Formatter().parse(value) if f is not None}
+            fields = _template_fields(value)
         except ValueError as exc:
             raise ConfigError(f"{where}: `{key}`: {exc}") from None
         unknown = sorted(fields - TITLE_FIELDS)
@@ -227,8 +227,23 @@ def _titles(raw: dict[str, Any], where: str) -> Titles:
             raise ConfigError(
                 f"{where}: `{key}` uses {shown}; use {{title}}, {{number}} or {{repo}}"
             )
+        # Fill it once with values of the types planning uses, so a bad conversion or format
+        # spec, such as {title!x} or {number:abc}, stops the run now, not after reading GitHub.
+        try:
+            value.format(title="", number=0, repo="")
+        except ValueError as exc:
+            raise ConfigError(f"{where}: `{key}`: {exc}") from None
         values[key] = value
     return Titles(**values)
+
+
+def _template_fields(template: str) -> set[str]:
+    """The fields a template uses, including those nested in a format spec: {title:{number}}."""
+    fields = set()
+    for _, name, spec, _ in string.Formatter().parse(template):
+        if name is not None:
+            fields |= {name, *_template_fields(spec or "")}
+    return fields
 
 
 def _status(raw: dict[str, Any], where: str) -> StatusNames:
