@@ -4,268 +4,143 @@
 
 # ferryGL
 
-Ferry your GitHub work into your own Linear workspace, from repositories you can read but
-don't administer.
+ferryGL copies the GitHub issues and pull requests you work on into your own Linear
+workspace, and keeps their status up to date. It works in repositories you can read but
+don't administer, using only your own credentials.
 
 > **Status: early version (0.1).** `ferrygl check` and `ferrygl sync` work, and are tested
 > with local fixtures and against a real GitHub repository.
 >
 > ferryGL is an independent project. It is not affiliated with or endorsed by Linear or GitHub.
 
-## Who it's for
+## Why
 
-You write code in someone else's GitHub organization (a client, a partner, an upstream
-project), but your team plans and reports work in its own Linear workspace.
+You write code in someone else's GitHub organization (a client, a partner, an open-source
+project), but your team plans its work in its own Linear workspace. Linear's GitHub
+integration can't connect the two: an admin of the GitHub organization has to install it,
+and an organization can connect to only one Linear workspace.
 
-Linear's GitHub integration doesn't cover this case:
-
-- It must be installed by an owner, or a repository admin, of the GitHub organization.
-- A GitHub organization can connect to only one Linear workspace. If the organization uses
-  Linear itself, your workspace can't connect to it.
-
-So you copy issues and pull requests into Linear by hand and move their status as they
-progress. ferryGL does that for you with your own credentials. It never writes to GitHub.
+So you copy issues and pull requests into Linear by hand, and move their status as they
+progress. ferryGL does that for you.
 
 ## What it does
 
-On each run, ferryGL finds every issue and pull request your GitHub account is part of in
-the repositories you list, and makes sure each one has exactly one Linear issue, assigned to
-you, with the right status.
+Each time you run it, ferryGL:
 
-| Your role on GitHub | How ferryGL finds it | Default Linear title |
-|---|---|---|
-| You created an issue, or are assigned to it | `is:issue author:<you>`, `is:issue assignee:<you>` | `{title} #{number}` |
-| You opened a pull request | `is:pr author:<you>` | `{title} - #{number}` |
-| You're assigned to someone else's pull request | `is:pr assignee:<you>` | `[PR] {title} - #{number}` |
-| You reviewed it, or your review is requested | `reviewed-by:<you>`, `user-review-requested:<you>` | `[PR] {title} - #{number}` |
-| You wrote one of its commits | the commit authors of each pull request | `[PR] {title} - #{number}` |
+1. **Finds your GitHub work** in the repositories you list: issues you created or are
+   assigned to, pull requests you opened, and other people's pull requests you're assigned
+   to, reviewed, were asked to review, or wrote commits for.
+2. **Gives each item one Linear issue**, assigned to you and linked back to GitHub. A pull
+   request you open for one of your issues joins that issue's Linear issue, so an issue and
+   its fix are tracked once.
+3. **Keeps the status in step with GitHub:**
 
-An item you have several roles on still gets one Linear issue. In the config, someone else's
-pull request you're part of is an `involved` item.
+   | On GitHub | In Linear |
+   |---|---|
+   | Issue open, or your review is requested | Todo |
+   | Pull request in draft | In Progress |
+   | Pull request open, or you've reviewed it | In Review |
+   | Pull request merged, or issue closed as completed | Done |
+   | Pull request closed unmerged, or issue closed as not planned | Canceled |
 
-GitHub search can't find pull requests by commit author, so ferryGL reads every pull request
-in the route updated since `since` and checks the authors, including co-authors, of its first
-100 commits. That's the slowest part of a run. Set `since`, or turn it off with
-`prs_with_commits = false`.
+   An issue's Linear issue follows its pull request until the issue itself is closed. The
+   [sync rules](docs/sync-rules.md#status-rules) cover every case, and the status names are
+   configurable.
 
-A pull request you opened that refers to one of your synced issues, through a closing keyword
-such as `Fixes #252` or a plain `#252` in its title or description, is linked to that
-issue's Linear issue instead of getting its own. Someone else's pull request always gets its
-own Linear issue.
+It's built to be safe in repositories that belong to someone else:
 
-For example, you're assigned `acme/api#252` and open `acme/api#335`, whose description says
-"Part of #252":
-
-1. ferryGL creates one Linear issue, "Store shared configuration once #252", links both
-   GitHub URLs to it and sets it to In Review.
-2. #335 merges while #252 stays open. The Linear issue stays In Review, because the work
-   isn't done until the GitHub issue is closed.
-3. #252 is closed as completed. The Linear issue moves to Done.
-
-ferryGL only changes Linear issues assigned to you. If a teammate's Linear issue links the
-same pull request, it's left alone.
-
-## Status rules
-
-Linear state names are configurable. These are the defaults:
-
-| GitHub state | Linear status |
-|---|---|
-| Issue open, no linked pull request open | Todo |
-| Issue open, a linked pull request open | In Review (In Progress if every open one is a draft) |
-| Issue open, linked pull requests merged | Unchanged |
-| Issue closed as completed | Done |
-| Issue closed as not planned or duplicate | Canceled |
-| Your pull request is a draft | In Progress |
-| Your pull request is open | In Review |
-| Pull request merged | Done |
-| Pull request closed without merging | Canceled |
-| Someone else's: your review is requested, including again after you reviewed | Todo |
-| Someone else's: you reviewed, no new request, still open | In Review |
-| Someone else's, assigned to you or with your commits: draft | In Progress |
-| Someone else's, assigned to you or with your commits: open | In Review |
-
-**Your edits win.** ferryGL records the GitHub state it last acted on in the link's metadata
-on the Linear issue, and changes the Linear status only when that GitHub state changes. If
-you move an issue by hand, ferryGL leaves it alone until something happens on GitHub.
-
-**Nothing is deleted.** If an item leaves your scope, for example you're unassigned or a
-review request is withdrawn, its Linear issue stays as it is.
-
-## Linear issues you already made by hand
-
-Before creating a Linear issue, ferryGL looks for one of yours in the route's team that
-already mentions the item:
-
-- its GitHub URL is in the description or links, or
-- its title ends with `#<number>`, when the route has a single repository and the
-  description mentions no other GitHub item.
-
-A Linear issue already linked to a different GitHub item is about that item, and never
-matches. Two more rules cover hand-made issues for pull requests:
-
-- If nothing mentions a pull request you opened, a Linear issue that mentions an issue it
-  refers to counts, unless that Linear issue is linked to a pull request.
-- If an issue assigned to you has no Linear issue but its pull request already has one, the
-  issue joins that Linear issue.
-
-When exactly one issue matches, ferryGL links it instead of creating a new one (`adopt` in
-the plan). It doesn't change that issue's status unless GitHub says the work is done or
-canceled. When several match, ferryGL skips the item and lists them, so you can link the
-right one by hand.
-
-## What data leaves GitHub
-
-Private repositories often belong to someone else, and their contents may be covered by an
-agreement. By default ferryGL copies as little as possible:
-
-- **Copied:** title, number, repository, URL, state and your role (assignee, author or
-  reviewer).
-- **Not copied unless you turn it on:** descriptions. Comments, labels and other people's
-  names are never copied.
-- **Stricter:** title templates such as `"{repo}#{number}"` keep titles out of Linear too.
-
-Check that copying titles into your Linear workspace is acceptable for each repository you
-configure.
-
-## Setup
-
-ferryGL needs Python 3.11 or later. Install the `ferrygl` command with any of:
-
-```console
-$ pipx install ferrygl
-$ uv tool install ferrygl
-$ pip install ferrygl
-```
-
-To try unreleased changes, install from the repository instead, for example
-`uv tool install git+https://github.com/ao-batouche/ferryGL`.
-
-**1. A GitHub token that can read the repositories.** ferryGL only reads issues and pull
-requests. For each route it uses, in order:
-
-- the GitHub CLI account named by the route's `github_user` (`gh auth token --user <name>`),
-- otherwise `GH_TOKEN` or `GITHUB_TOKEN`,
-- otherwise the GitHub CLI's active account.
-
-`github_user` is for people with more than one GitHub account, such as a work account for a
-client's organization and a personal one for open source. A fine-grained token needs read
-access to Issues, Pull requests and Metadata. Some organizations require owner approval for
-fine-grained tokens, or block classic ones.
-
-**2. A Linear API key.** Create a personal API key in
-[Linear's API settings](https://linear.app/settings/api) with read and write access. You can
-limit it to the teams ferryGL writes to. Put it in `LINEAR_API_KEY`, or in a file named by
-`[linear] api_key_file`.
-
-**3. A config file.** ferryGL reads `~/.config/ferrygl/ferrygl.toml`, or the file given by
-`--config` or `FERRYGL_CONFIG`. Each `[[route]]` sends some repositories to a Linear team and,
-optionally, a project:
-
-```toml
-[[route]]
-repos = ["acme/api", "acme/web"]
-team = "ENG"                  # Linear team key or name
-project = "Acme engagement"   # optional
-github_user = "alice-acme"    # optional: read GitHub as this gh account
-
-[[route]]
-repos = ["upstream-org/*"]    # every repository of a user or organization
-team = "ENG"
-project = "Upstream contributions"
-github_user = "alice"
-
-[sync]
-since = 2026-09-01            # ignore items not updated since this date
-label = "ferryGL"             # optional: an existing label added to every issue ferryGL creates
-# Roles, all true by default: issues_assigned, issues_created, prs_created, prs_assigned,
-# prs_reviewed, review_requests, prs_with_commits
-
-[titles]                      # use "{repo}#{number}" to keep titles out of Linear
-issue = "{title} #{number}"
-pr = "{title} - #{number}"
-involved = "[PR] {title} - #{number}"
-
-[copy]
-description = false
-
-[status]                      # your team's Linear workflow state names
-todo = "Todo"
-in_progress = "In Progress"
-in_review = "In Review"
-done = "Done"
-canceled = "Canceled"
-
-[linear]
-api_key_file = "~/.config/ferrygl/linear-api-key"
-```
-
-**4. Check, preview, then apply:**
-
-```console
-$ ferrygl check
-$ ferrygl sync
-$ ferrygl sync --apply
-```
-
-`check` confirms that both credentials work, every repository is readable, and the Linear
-teams, projects, states and label exist. `sync` on its own only prints the plan, for
-example:
-
-```text
-acme/api#252  issue     update  ENG-7 Todo -> In Review
-acme/api#335  pr        link    -> ENG-7
-acme/api#348  involved  adopt   -> ENG-9
-3 changes (1 adopt, 1 link, 1 update). Run with --apply to make them.
-```
-
-`sync --apply` makes those changes and prints the identifier of each Linear issue it
-creates. Run the preview first: the first sync is the one most likely to find Linear issues
-you made by hand, and it records the current GitHub state on each of them (`record` in the
-plan).
-
-## Running on a schedule
-
-- **cron on a machine you use:**
-
-  ```text
-  0 9,15 * * 1-5  ferrygl sync --apply >> ~/.cache/ferrygl.log 2>&1
-  ```
-
-  With `[linear] api_key_file` and `github_user` set, cron needs no extra environment.
-
-- **GitHub Actions in a repository on your own account:** a scheduled workflow with your
-  GitHub token and Linear key stored as secrets. The workflow's built-in `GITHUB_TOKEN`
-  can't read other organizations' repositories, so it needs your own token. A template
-  workflow is planned.
-
-## When something goes wrong
-
-- If a configured Linear team, project, state or label doesn't exist, `sync` stops before
-  reading GitHub or writing anything, and exits with status 2. `ferrygl check` shows what's
-  missing.
-- If a route's repositories can't be read, ferryGL reports it, skips that route, continues
-  with the others, and exits with status 1.
-- If a write fails, ferryGL reports it and continues. A run that fails halfway is safe to
-  repeat: ferryGL finds Linear issues by their GitHub links, so a rerun doesn't create
-  duplicates.
-- Creating a Linear issue is never retried after a network error, because Linear may have
-  created it anyway. If it did, the next sync adopts it through the GitHub URL in its
-  description.
+- **Read-only on GitHub.** It never comments, labels or changes anything there.
+- **Preview first.** `ferrygl sync` only shows what it would do. `ferrygl sync --apply` does it.
+- **Your edits win.** It moves a Linear status only when something changes on GitHub. If you
+  move an issue by hand, it stays where you put it.
+- **Nothing is deleted.** If an item leaves your scope, its Linear issue stays as it is.
+- **Little is copied.** Titles, numbers, repository names, links and states. Descriptions
+  only if you turn them on. Never comments or other people's names.
 
 ## How it works
 
-- **No database.** Every Linear issue ferryGL manages has a link with the GitHub URL.
-  ferryGL finds it with Linear's `attachmentsForURL` query, and keeps the last GitHub state
-  it acted on in the link's `metadata`, as flat `ferrygl_*` keys such as `ferrygl_state`.
-  Linear holds all the state.
-- **Few requests.** GitHub reads use the GraphQL search API: up to four searches per route,
-  plus one request per 50 results.
-- **Testable core.** Planning (`ferrygl.plan`) is a pure function from GitHub items, existing
-  Linear issues and config to a list of changes. It's tested without network access.
-- **Small footprint.** One runtime dependency, `httpx`.
+ferryGL is a command you run by hand or on a schedule. It has no server and no database.
 
-## Development
+1. **Read GitHub.** For each *route* in your config (some repositories and the Linear team
+   they go to), ferryGL searches GitHub once for each of your roles.
+2. **Look up Linear.** It finds the Linear issues it made before by their links to GitHub, so
+   running it again never creates duplicates. Before creating a new issue, it checks whether
+   you already made one by hand that mentions the GitHub item, and links that one instead.
+3. **Plan.** It compares GitHub with Linear and lists the changes: create an issue, link one,
+   or move a status.
+4. **Apply.** With `--apply`, it makes those changes in Linear.
+
+On each Linear issue, ferryGL records the last GitHub state it acted on in the metadata of
+the GitHub link. That's how it tells whether something changed on GitHub since the last run,
+and why it leaves your own edits alone.
+
+## Quick start
+
+You need Python 3.11 or later, a GitHub account that can read the repositories, and a Linear
+workspace.
+
+1. Install ferryGL (or use `uv tool install ferrygl`, or `pip install ferrygl`):
+
+   ```console
+   $ pipx install ferrygl
+   ```
+
+2. Sign in to GitHub with the [GitHub CLI](https://cli.github.com/) (`gh auth login`), or set
+   `GH_TOKEN` to a token that can read the repositories.
+
+3. Create a personal API key in [Linear's API settings](https://linear.app/settings/api), and
+   set `LINEAR_API_KEY` to it.
+
+4. Write `~/.config/ferrygl/ferrygl.toml`:
+
+   ```toml
+   [[route]]
+   repos = ["acme/api", "acme/web"]   # or "acme/*" for every repository of an owner
+   team = "ENG"                       # Linear team key or name
+
+   [sync]
+   since = 2026-09-01                 # ignore items not updated since this date
+   ```
+
+5. Check the setup, preview the changes, then apply them:
+
+   ```console
+   $ ferrygl check
+   $ ferrygl sync
+   $ ferrygl sync --apply
+   ```
+
+   The preview lists each change:
+
+   ```text
+   acme/api#252  issue     update  ENG-7 Todo -> In Review
+   acme/api#335  pr        link    -> ENG-7
+   acme/api#348  involved  adopt   -> ENG-9
+   3 changes (1 adopt, 1 link, 1 update). Run with --apply to make them.
+   ```
+
+[Getting started](docs/getting-started.md) walks through the same steps in more detail.
+
+## Documentation
+
+| Page | What's in it |
+|---|---|
+| [Getting started](docs/getting-started.md) | Install, credentials, and a careful first run |
+| [Configuration](docs/configuration.md) | Every setting in `ferrygl.toml` |
+| [Sync rules](docs/sync-rules.md) | Which items are synced, how they map to Linear issues, and how statuses move |
+| [Commands](docs/commands.md) | `check` and `sync`, reading the plan, exit statuses, schedules, troubleshooting |
+| [Data and privacy](docs/data-and-privacy.md) | What ferryGL reads, what it writes to Linear, and what it keeps |
+| [Architecture](docs/architecture.md) | How a run works inside, request costs, retries and limits |
+
+## What it doesn't do
+
+- Write anything to GitHub.
+- Sync both ways, or keep descriptions and comments in sync.
+- React instantly. There are no webhooks: Linear catches up each time ferryGL runs.
+- Sync every issue in a repository for a whole team. Linear's GitHub integration does that
+  when you can install it.
+
+## Contributing
 
 ```console
 $ uv sync
@@ -273,23 +148,8 @@ $ uv run pytest
 $ uv run ruff check && uv run ruff format --check
 ```
 
-Before changing ferryGL, read [AGENTS.md](AGENTS.md): it lists the invariants, the data
-ferryGL leaves in users' Linear workspaces, and the testing and review rules for
-contributors and coding agents.
-
-## Not planned
-
-- Writing anything to GitHub: comments, labels or status.
-- Two-way sync, or keeping descriptions and comments in sync.
-- Webhooks or a hosted service. ferryGL polls, so changes arrive on your schedule, not
-  instantly.
-- Syncing every issue in a repository for a whole team. Linear's GitHub integration does that
-  when you can install it.
-
-## Open questions
-
-- Should commenting on an item, or being mentioned in it, count as a role? Today they don't,
-  because they'd pull in many items you only touched in passing.
+Read [AGENTS.md](AGENTS.md) before changing ferryGL. It lists the rules that keep users'
+data safe, and how changes are tested and reviewed.
 
 ## License
 

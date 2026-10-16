@@ -1,8 +1,9 @@
 # Working on ferryGL
 
 These rules are for anyone changing ferryGL, including coding agents. Read the
-[README](README.md) first: it is the user-facing contract for behavior, configuration and
-limits. This file adds the invariants, layout and workflow that keep changes safe.
+[README](README.md) and the pages in [docs/](docs/) first: together they are the user-facing
+contract for behavior, configuration and limits. This file adds the invariants, layout and
+workflow that keep changes safe.
 
 ferryGL copies every issue and pull request a person's GitHub account is part of (created,
 assigned, reviewed, review requested, or with their commits) one way into their own Linear
@@ -75,6 +76,7 @@ Users' Linear workspaces keep what ferryGL writes, so treat these as compatibili
 | `src/ferrygl/model.py` | Shared types: `Kind`, `Role`, `GitHubItem`, `LinearIssue`, `Attachment`, `Change` |
 | `src/ferrygl/_http.py` | JSON POST with retries for both clients |
 | `tests/builders.py` | Builders for synthetic items, Linear issues and links |
+| `docs/` | User documentation: setup, configuration, sync rules, commands, data, architecture |
 
 ## Development
 
@@ -110,10 +112,22 @@ $ uv run ruff check && uv run ruff format --check
 
 ## Documentation
 
-The README is part of every behavior change. Update it in the same change when you alter the
-status rules, adoption rules, config keys, defaults, exit statuses, data copied or supported
-limits. Describe current behavior only: history belongs in Git, and progress notes belong in
-issues and pull requests. Mark planned features as planned.
+The documentation is part of every behavior change. Update it in the same change when you
+alter the status rules, adoption rules, config keys, defaults, exit statuses, data copied or
+supported limits. Describe current behavior only: history belongs in Git, and progress notes
+belong in issues and pull requests. Mark planned features as planned.
+
+The README stays short: what ferryGL does, how it works, and a quick start. Details go in
+`docs/`:
+
+| Page | Covers |
+|---|---|
+| `docs/getting-started.md` | Install, credentials, first run |
+| `docs/configuration.md` | Every config key and its default |
+| `docs/sync-rules.md` | Roles, homes, riding pull requests, status rules, adoption |
+| `docs/commands.md` | `check`, `sync`, plan actions, exit statuses, scheduling, errors |
+| `docs/data-and-privacy.md` | What is read, written to Linear, and kept; link metadata |
+| `docs/architecture.md` | Run steps, state keys, request costs, retries, limits |
 
 ## Git and GitHub
 
@@ -134,7 +148,7 @@ issues and pull requests. Mark planned features as planned.
 Releases need the project owner's approval each time.
 
 1. In a pull request, set `__version__` in `src/ferrygl/__init__.py` (the only place the
-   version lives) and update the README for anything users will notice. Merge it.
+   version lives) and update the README and `docs/` for anything users will notice. Merge it.
 2. Tag the merge commit on `main` with `v<version>`, such as `v0.2.0`, and push the tag.
 3. `.github/workflows/release.yml` tests and builds the package, checks that the tag matches
    the version, publishes to PyPI through trusted publishing (no token is stored), and
