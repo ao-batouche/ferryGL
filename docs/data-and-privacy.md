@@ -43,6 +43,13 @@ metadata on the GitHub links it uses, including ones you added yourself. It keep
 and subtitle.
 It never edits titles or descriptions, and never deletes anything.
 
+### Comments
+
+With [`[sync] comment = true`](configuration.md#sync) (off by default), ferryGL also posts a
+comment on the Linear issue for each change it makes, starting with `(BY-FGL)`. The comment
+names the GitHub items (`owner/repo#number`), their GitHub state and the Linear status, and
+nothing else: no titles, descriptions or names. ferryGL never edits or deletes its comments.
+
 ### Link metadata
 
 ferryGL keeps its state in the metadata of each GitHub link, under keys that start with
@@ -60,7 +67,7 @@ When ferryGL updates a link, it replaces only its own keys and keeps any others.
 
 ## What it never copies
 
-- Comments and reviews.
+- GitHub comments and reviews.
 - GitHub labels, milestones and other fields.
 - Other people's names or logins, including the authors of pull requests and commits.
 - Code, commits and diffs.

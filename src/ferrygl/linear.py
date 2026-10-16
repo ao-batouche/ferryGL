@@ -229,6 +229,13 @@ class LinearClient:
         data = self.graphql(query, {"id": issue_id, "input": {"stateId": state_id}})
         self._require(data, "issueUpdate")
 
+    def create_comment(self, issue_id: str, body: str) -> None:
+        query = """
+        mutation($input: CommentCreateInput!) { commentCreate(input: $input) { success } }"""
+        # Not retried after a network error: Linear may have posted the comment already.
+        variables = {"input": {"issueId": issue_id, "body": body}}
+        self._require(self.graphql(query, variables, idempotent=False), "commentCreate")
+
     @staticmethod
     def _require(data: dict[str, Any], mutation: str) -> None:
         if not data[mutation]["success"]:

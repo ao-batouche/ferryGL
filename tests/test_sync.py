@@ -10,17 +10,18 @@ from test_github import issue_node, pr_node
 from ferrygl.cli import linear_api_key
 from ferrygl.config import Config, ConfigError, Route, SyncOptions
 from ferrygl.github import GitHubError
-from ferrygl.linear import State, Team
+from ferrygl.linear import LinearError, State, Team
 from ferrygl.model import LinearIssue
 from ferrygl.sync import EXIT_FAILED, EXIT_OK, EXIT_SETUP, run_check, run_sync
 
 
 class FakeLinear:
-    def __init__(self, attachments=None, candidates=(), states=None) -> None:
+    def __init__(self, attachments=None, candidates=(), states=None, comments_fail=False) -> None:
         self.attachments = attachments or {}
         self.candidates = list(candidates)
         names = states or list(STATE_TYPES)
         self.states = {n: State(f"state-{n}", n, STATE_TYPES.get(n, "started")) for n in names}
+        self.comments_fail = comments_fail
         self.writes: list[tuple] = []
         self.created = 0
 
@@ -61,6 +62,11 @@ class FakeLinear:
 
     def update_issue_state(self, issue_id, state_id):
         self.writes.append(("update_issue_state", issue_id, state_id))
+
+    def create_comment(self, issue_id, body):
+        if self.comments_fail:
+            raise LinearError("Linear reported commentCreate as unsuccessful")
+        self.writes.append(("create_comment", issue_id, body))
 
 
 class FakeGitHub:
@@ -150,6 +156,78 @@ def test_apply_updates_status_before_recording_the_github_state():
         ("update_attachment", "att-ENG-1-15"),
     ]
     assert "ENG-1 In Review -> Done" in out
+
+
+def merged_pr_on_eng_1(**fake):
+    """acme/api#15 was merged on GitHub; ENG-1 is In Review with the link recorded as open."""
+    item = pr(15, state="MERGED")
+    home = linear_issue("ENG-1", state="In Review")
+    link = attachment(item, home, recorded="pr:open")
+    linear = FakeLinear(attachments={item.url: [link]}, **fake)
+    github = FakeGitHub(results={"is:pr author:": [{**pr_node(15), "state": "MERGED"}]})
+    return linear, github
+
+
+def test_preview_shows_each_comment_and_writes_nothing():
+    linear, github = merged_pr_on_eng_1()
+
+    code, out, _ = sync(make_config(comment=True), linear, github)
+
+    assert code == EXIT_OK
+    assert "comment: (BY-FGL) Status In Review → Done: acme/api#15 was merged." in out
+    assert linear.writes == []
+
+
+def test_apply_comments_after_the_status_and_before_recording_the_github_state():
+    linear, github = merged_pr_on_eng_1()
+
+    code, _, _ = sync(make_config(comment=True), linear, github, apply=True)
+
+    assert code == EXIT_OK
+    assert linear.writes == [
+        ("update_issue_state", "id-ENG-1", "state-Done"),
+        ("create_comment", "id-ENG-1", "(BY-FGL) Status In Review → Done: acme/api#15 was merged."),
+        ("update_attachment", "att-ENG-1-15"),
+    ]
+
+
+def test_a_failed_comment_leaves_the_github_state_unrecorded_for_the_next_run():
+    linear, github = merged_pr_on_eng_1(comments_fail=True)
+
+    code, _, err = sync(make_config(comment=True), linear, github, apply=True)
+
+    assert code == EXIT_FAILED
+    assert linear.writes == [("update_issue_state", "id-ENG-1", "state-Done")]
+    assert "acme/api#15: update failed: Linear reported commentCreate" in err
+
+
+def test_apply_comments_on_a_new_issue_before_linking_it():
+    github = FakeGitHub(results={"assignee:": [issue_node(12)]})
+    linear = FakeLinear()
+
+    code, _, _ = sync(make_config(comment=True), linear, github, apply=True)
+
+    assert code == EXIT_OK
+    assert [write[0] for write in linear.writes] == [
+        "create_issue",
+        "create_comment",
+        "create_attachment",
+    ]
+    assert linear.writes[1][1:] == (
+        "id-ENG-101",
+        "(BY-FGL) Created from acme/api#12. Status Todo: acme/api#12 is open.",
+    )
+
+
+def test_a_failed_comment_on_a_new_issue_names_the_issue():
+    github = FakeGitHub(results={"assignee:": [issue_node(12)]})
+    linear = FakeLinear(comments_fail=True)
+
+    code, _, err = sync(make_config(comment=True), linear, github, apply=True)
+
+    assert code == EXIT_FAILED
+    assert [write[0] for write in linear.writes] == ["create_issue"]
+    assert "acme/api#12: create failed: ENG-101 was created, but Linear reported" in err
 
 
 def test_missing_linear_settings_stop_before_reading_github():

@@ -32,6 +32,7 @@ from ferrygl.model import (
 
 META_PREFIX = "ferrygl_"
 META_VERSION = 1
+COMMENT_MARKER = "(BY-FGL)"  # starts every comment ferryGL posts, so people can find them
 TERMINAL = frozenset({"done", "canceled"})
 LINEAR_CLOSED_TYPES = frozenset({"completed", "canceled", "duplicate"})
 
@@ -44,40 +45,51 @@ class GitHubState:
     key: str  # recorded on the Linear link, such as "issue:open:pr_open"
     on_change: str | None  # status category when this state is new; None keeps the status
     on_create: str  # status category for a new Linear issue
+    summary: str  # for comments, such as "acme/api#12 was merged"
 
 
 def github_state(item: GitHubItem, linked_prs: Sequence[GitHubItem] = ()) -> GitHubState:
     """Where ``item`` stands on GitHub, and the Linear status that follows from it."""
+    label = item.label
     if item.kind is Kind.ISSUE:
         if item.state == "CLOSED":
             if item.state_reason in ("NOT_PLANNED", "DUPLICATE"):
-                return GitHubState("issue:closed:not_planned", "canceled", "canceled")
-            return GitHubState("issue:closed:completed", "done", "done")
+                reason = item.state_reason.lower().replace("_", " ")
+                closed = f"{label} was closed as {reason}"
+                return GitHubState("issue:closed:not_planned", "canceled", "canceled", closed)
+            closed = f"{label} was closed as completed"
+            return GitHubState("issue:closed:completed", "done", "done", closed)
         open_prs = [pr for pr in linked_prs if pr.state == "OPEN"]
         if any(not pr.is_draft for pr in open_prs):
-            return GitHubState("issue:open:pr_open", "in_review", "in_review")
+            summary = f"{label} has a pull request open for review"
+            return GitHubState("issue:open:pr_open", "in_review", "in_review", summary)
         if open_prs:
-            return GitHubState("issue:open:pr_draft", "in_progress", "in_progress")
+            summary = f"{label} has a draft pull request"
+            return GitHubState("issue:open:pr_draft", "in_progress", "in_progress", summary)
         if any(pr.state == "MERGED" for pr in linked_prs):
             # The fix landed but the issue is still open: the work isn't done yet.
-            return GitHubState("issue:open:pr_merged", None, "in_review")
-        return GitHubState("issue:open", "todo", "todo")
+            summary = f"{label}'s pull request was merged, and the issue is still open"
+            return GitHubState("issue:open:pr_merged", None, "in_review", summary)
+        return GitHubState("issue:open", "todo", "todo", f"{label} is open")
 
     kind = item.kind.value
     if item.state == "MERGED":
-        return GitHubState(f"{kind}:merged", "done", "done")
+        return GitHubState(f"{kind}:merged", "done", "done", f"{label} was merged")
     if item.state == "CLOSED":
-        return GitHubState(f"{kind}:closed", "canceled", "canceled")
+        summary = f"{label} was closed without being merged"
+        return GitHubState(f"{kind}:closed", "canceled", "canceled", summary)
     if item.kind is Kind.INVOLVED:
         # A request, including one after your review, means it's your turn.
         if Role.REQUESTED in item.roles:
-            return GitHubState("involved:requested", "todo", "todo")
+            summary = f"a review is requested on {label}"
+            return GitHubState("involved:requested", "todo", "todo", summary)
         if Role.REVIEWER in item.roles:
-            return GitHubState("involved:reviewed", "in_review", "in_review")
+            summary = f"{label} was reviewed"
+            return GitHubState("involved:reviewed", "in_review", "in_review", summary)
     # Your pull request, or one you're assigned to or commit to, follows its own state.
     if item.is_draft:
-        return GitHubState(f"{kind}:draft", "in_progress", "in_progress")
-    return GitHubState(f"{kind}:open", "in_review", "in_review")
+        return GitHubState(f"{kind}:draft", "in_progress", "in_progress", f"{label} is a draft")
+    return GitHubState(f"{kind}:open", "in_review", "in_review", f"{label} is open for review")
 
 
 @dataclass(frozen=True)
@@ -211,6 +223,10 @@ class _Planner:
                 metadata=self.metadata(home.metadata, item, state),
                 attachment_id=home.id,
             )
+            if status_to:
+                said = f"Status {issue.state_name} → {status_to}: {state.summary}."
+            else:
+                said = f"Status stays {issue.state_name}: {state.summary}."
             changes.append(
                 Change(
                     Action.UPDATE if status_to else Action.RECORD,
@@ -219,12 +235,20 @@ class _Planner:
                     status_from=issue.state_name if status_to else None,
                     status_to=status_to,
                     links=(record,),
+                    comment=self.comment(said),
                 )
             )
         for pr in riders:
             if not self.attached(pr.url, issue):
+                said = f"Linked {pr.label}, a pull request that refers to {item.label}."
                 changes.append(
-                    Change(Action.LINK, pr, issue=issue, links=(self.rider_link(pr, item),))
+                    Change(
+                        Action.LINK,
+                        pr,
+                        issue=issue,
+                        links=(self.rider_link(pr, item),),
+                        comment=self.comment(said),
+                    )
                 )
         return changes
 
@@ -238,16 +262,21 @@ class _Planner:
             return [Change(Action.SKIP, item, note=note)]
         if matches:
             return [self.adopt(item, state, matches[0], riders)]
+        status_to = self.names.name(state.on_create)
+        sources = _join([item.label, *(pr.label for pr in riders)])
         return [
             Change(
                 Action.CREATE,
                 item,
                 title=self.title(item),
                 description=self.description(item, riders),
-                status_to=self.names.name(state.on_create),
+                status_to=status_to,
                 links=(
                     self.primary_link(item, state),
                     *(self.rider_link(pr, item) for pr in riders),
+                ),
+                comment=self.comment(
+                    f"Created from {sources}.", f"Status {status_to}: {state.summary}."
                 ),
             )
         ]
@@ -261,9 +290,13 @@ class _Planner:
     ) -> Change:
         """Link ``item`` to an existing Linear issue that has no link to it yet."""
         self.claimed.add(issue.id)
+        new_riders = [pr for pr in riders if not self.attached(pr.url, issue)]
         links = [self.primary_link(item, state)]
-        links += [self.rider_link(pr, item) for pr in riders if not self.attached(pr.url, issue)]
+        links += [self.rider_link(pr, item) for pr in new_riders]
         status_to = self.target(self.closing_category(state.on_create, issue), issue)
+        said = [f"Linked {_join([item.label, *(pr.label for pr in new_riders)])}."]
+        if status_to:
+            said.append(f"Status {issue.state_name} → {status_to}: {state.summary}.")
         return Change(
             Action.ADOPT,
             item,
@@ -271,6 +304,7 @@ class _Planner:
             status_from=issue.state_name if status_to else None,
             status_to=status_to,
             links=tuple(links),
+            comment=self.comment(*said),
         )
 
     def candidates_for(self, item: GitHubItem, riders: Sequence[GitHubItem]) -> list[LinearIssue]:
@@ -334,6 +368,13 @@ class _Planner:
         name = self.names.name(category)
         return name if name != issue.state_name else None
 
+    def comment(self, *sentences: str) -> str | None:
+        """The comment to post with a change, or None when `[sync] comment` is off. It uses
+        only what ferryGL already writes to Linear: item numbers, states and status names."""
+        if not self.inp.config.sync.comment:
+            return None
+        return " ".join((COMMENT_MARKER, *sentences))
+
     def metadata(
         self, existing: dict[str, Any], item: GitHubItem, state: GitHubState
     ) -> dict[str, Any]:
@@ -376,6 +417,13 @@ def _meta(kind: str, **fields: str) -> dict[str, Any]:
     meta: dict[str, Any] = {f"{META_PREFIX}v": META_VERSION, f"{META_PREFIX}kind": kind}
     meta.update({f"{META_PREFIX}{name}": value for name, value in fields.items()})
     return meta
+
+
+def _join(words: Sequence[str]) -> str:
+    """``a``, ``a and b``, or ``a, b and c``."""
+    if len(words) < 2:
+        return "".join(words)
+    return f"{', '.join(words[:-1])} and {words[-1]}"
 
 
 def _recorded(metadata: Any) -> dict[str, Any]:

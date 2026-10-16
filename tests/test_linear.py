@@ -147,6 +147,26 @@ def test_reads_are_retried_but_issue_creation_is_not():
     assert len(calls) == 1
 
 
+def test_create_comment_is_not_retried():
+    sent = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        sent.append(json.loads(request.content)["variables"]["input"])
+        if len(sent) == 1:
+            return httpx.Response(503, text="unavailable")
+        return httpx.Response(200, json={"data": {"commentCreate": {"success": True}}})
+
+    client = LinearClient(
+        "k", http=httpx.Client(transport=httpx.MockTransport(handler)), sleep=lambda s: None
+    )
+    with pytest.raises(LinearError, match="HTTP 503"):
+        client.create_comment("i1", "(BY-FGL) Linked acme/api#12.")
+    assert sent == [{"issueId": "i1", "body": "(BY-FGL) Linked acme/api#12."}]
+
+    client.create_comment("i1", "(BY-FGL) Linked acme/api#12.")
+    assert len(sent) == 2
+
+
 def test_unsuccessful_mutations_raise():
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json={"data": {"issueUpdate": {"success": False}}})
