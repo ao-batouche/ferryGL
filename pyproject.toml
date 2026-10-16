@@ -20,7 +20,8 @@ classifiers = [
 dependencies = ["httpx>=0.27"]
 
 [project.urls]
-Homepage = "https://github.com/ao-batouche/ferryGL"
+Homepage = "https://oussamabatouche.com/ferryGL/"
+Documentation = "https://oussamabatouche.com/ferryGL/docs/"
 Repository = "https://github.com/ao-batouche/ferryGL"
 Issues = "https://github.com/ao-batouche/ferryGL/issues"
 
@@ -38,7 +39,7 @@ build-backend = "hatchling.build"
 path = "src/ferrygl/__init__.py"
 
 [tool.hatch.build.targets.sdist]
-exclude = ["/assets", "/.github"]
+exclude = ["/assets", "/.github", "/site"]
 
 [tool.ruff]
 line-length = 100

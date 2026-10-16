@@ -123,6 +123,8 @@ workspace.
 
 ## Documentation
 
+The documentation is also on the website, at https://oussamabatouche.com/ferryGL/.
+
 | Page | What's in it |
 |---|---|
 | [Getting started](docs/getting-started.md) | Install, credentials, and a careful first run |

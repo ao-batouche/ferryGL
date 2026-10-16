@@ -77,6 +77,7 @@ Users' Linear workspaces keep what ferryGL writes, so treat these as compatibili
 | `src/ferrygl/_http.py` | JSON POST with retries for both clients |
 | `tests/builders.py` | Builders for synthetic items, Linear issues and links |
 | `docs/` | User documentation: setup, configuration, sync rules, commands, data, architecture |
+| `site/` | The website: a hand-written home page, and `build.py`, which renders `docs/` into pages |
 
 ## Development
 
@@ -128,6 +129,14 @@ The README stays short: what ferryGL does, how it works, and a quick start. Deta
 | `docs/commands.md` | `check`, `sync`, plan actions, exit statuses, scheduling, errors |
 | `docs/data-and-privacy.md` | What is read, written to Linear, and kept; link metadata |
 | `docs/architecture.md` | Run steps, state keys, request costs, retries, limits |
+
+The website (https://oussamabatouche.com/ferryGL/) is rebuilt from `docs/` whenever `docs/`
+or `site/` changes on `main`, so a page changed in `docs/` needs no other edit. A new page
+needs a link in `docs/README.md`, which sets the order of the sidebar. The home page,
+`site/index.html`, is written by hand: update it when the README's summary, status table or
+quick start changes. To preview, run `python3 site/build.py` and
+`python3 -m http.server --directory _site`. The build fails on a link to a missing page or
+anchor, and pull requests that touch `docs/` or `site/` run it.
 
 ## Git and GitHub
 

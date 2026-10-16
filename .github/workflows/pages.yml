@@ -1,0 +1,50 @@
+name: Pages
+
+# Build the website from site/ and docs/ with site/build.py, and publish it with GitHub Pages.
+# Pull requests only build it, which also checks every link between the pages.
+on:
+  push:
+    branches: [main]
+    paths: ["site/**", "docs/**", ".github/workflows/pages.yml"]
+  pull_request:
+    paths: ["site/**", "docs/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v6
+      - name: Build the site
+        run: python3 site/build.py --base-url "$BASE_URL"
+        env:
+          BASE_URL: ${{ steps.pages.outputs.base_url }}
+          GH_TOKEN: ${{ github.token }}  # for GitHub's Markdown API
+      - if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

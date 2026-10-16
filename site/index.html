@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- include: _head.html -->
+<title>ferryGL · Your GitHub work, in your own Linear workspace</title>
+<meta name="description" content="ferryGL copies the GitHub issues and pull requests you work on into your own Linear workspace, and keeps their status up to date, using only your own credentials.">
+<meta property="og:title" content="ferryGL · Your GitHub work, in your own Linear workspace">
+<meta property="og:description" content="Copies the GitHub issues and pull requests you work on into your own Linear workspace, and keeps their status up to date. Read-only on GitHub.">
+</head>
+<body data-page="home">
+<!-- include: _header.html -->
+
+<main id="main">
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <a class="badge" href="./docs/getting-started.html">
+          <span class="badge-tag">v0.1</span>
+          Early release
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </a>
+        <h1>Your GitHub work, in your own <span class="accent">Linear workspace</span></h1>
+        <p class="lead">ferryGL copies the GitHub issues and pull requests you work on into your own Linear workspace, and keeps their status up to date. It works in repositories you can read but don't administer, using only your own credentials.</p>
+
+        <div class="install">
+          <div class="install-tabs" role="tablist" aria-label="Install with">
+            <button type="button" role="tab" aria-selected="true" data-command="pipx install ferrygl">pipx</button>
+            <button type="button" role="tab" aria-selected="false" data-command="uv tool install ferrygl">uv</button>
+            <button type="button" role="tab" aria-selected="false" data-command="pip install ferrygl">pip</button>
+          </div>
+          <div class="command" role="tabpanel">
+            <span class="prompt" aria-hidden="true">$</span>
+            <code id="install-command">pipx install ferrygl</code>
+            <button class="copy-button" type="button" data-copy-target="install-command" aria-label="Copy the install command">
+              <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+              <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="cta-row">
+          <a class="button button-primary" href="./docs/getting-started.html">
+            Get started
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+          </a>
+          <a class="button button-secondary" href="https://github.com/ao-batouche/ferryGL">
+            <!-- include: _icon-github.html -->
+            View on GitHub
+          </a>
+        </div>
+
+        <ul class="hero-meta">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Read-only on GitHub</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Python 3.11+</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>MIT license</li>
+        </ul>
+      </div>
+
+      <div class="hero-visual">
+        <div class="terminal" role="img" aria-label="A terminal running ferrygl sync, which lists three planned changes, and then ferrygl sync --apply, which applies them.">
+          <div class="terminal-bar"><span></span><span></span><span></span><p>~/work</p></div>
+<pre><span class="t-prompt">$</span> <span class="t-cmd">ferrygl sync</span>
+acme/api#252  issue     update  ENG-7 Todo -&gt; In Review
+acme/api#335  pr        link    -&gt; ENG-7
+acme/api#348  involved  adopt   -&gt; ENG-9
+<span class="t-dim">3 changes (1 adopt, 1 link, 1 update). Run with --apply to make them.</span>
+
+<span class="t-prompt">$</span> <span class="t-cmd">ferrygl sync --apply</span>
+<span class="t-dim">…</span>
+<span class="t-ok">Applied 3 changes (1 adopt, 1 link, 1 update).</span></pre>
+        </div>
+
+        <div class="issue-card" aria-label="The resulting Linear issue">
+          <div class="issue-card-top"><span>ENG-7</span><span class="status status-review">In Review</span></div>
+          <h3>Store shared configuration once #252</h3>
+          <div class="issue-card-meta">
+            <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>You</span>
+            <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>Issue #252</span>
+            <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5v7"/><path d="M18 15.5V9a3 3 0 0 0-3-3h-4"/><path d="m13 3-3 3 3 3"/></svg>PR #335</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-soft" id="why">
+    <div class="container why-grid">
+      <div class="section-head left">
+        <p class="eyebrow">Why ferryGL</p>
+        <h2>Their GitHub, your Linear</h2>
+        <p>You write code in someone else's GitHub organization: a client, a partner, an open-source project. But your team plans its work in its own Linear workspace.</p>
+        <p>So you copy issues and pull requests into Linear by hand, and move their status as they progress. ferryGL does that for you.</p>
+      </div>
+      <div class="why-list">
+        <div class="card why-item">
+          <div class="why-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+          <div>
+            <h3>Linear's GitHub integration needs an admin</h3>
+            <p>An admin of the GitHub organization has to install it.</p>
+          </div>
+        </div>
+        <div class="card why-item">
+          <div class="why-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 0 1 4.6 7"/><path d="M8 12h3"/><path d="m3 3 18 18"/></svg></div>
+          <div>
+            <h3>One organization, one workspace</h3>
+            <p>A GitHub organization can connect to only one Linear workspace. If it uses Linear itself, yours can't connect to it.</p>
+          </div>
+        </div>
+        <div class="card why-item is-answer">
+          <div class="why-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3"/><path d="m16 7 3 3"/><path d="m19 4 2 2"/></svg></div>
+          <div>
+            <h3>ferryGL needs neither</h3>
+            <p>It runs with your own GitHub token and Linear API key, and only reads from GitHub.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="what-it-does">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">What it does</p>
+        <h2>Every item you're part of, tracked once</h2>
+        <p>Each time you run it, ferryGL brings Linear in line with your work on GitHub.</p>
+      </div>
+      <div class="steps-3">
+        <div class="card feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+          <h3>Finds your GitHub work</h3>
+          <p>Issues you created or are assigned to, pull requests you opened, and other people's pull requests you're assigned to, reviewed, were asked to review, or wrote commits for.</p>
+        </div>
+        <div class="card feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></div>
+          <h3>Gives each item one Linear issue</h3>
+          <p>Assigned to you and linked back to GitHub. A pull request you open for one of your issues joins that issue's Linear issue, so an issue and its fix are tracked once.</p>
+        </div>
+        <div class="card feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div>
+          <h3>Keeps the status in step</h3>
+          <p>Statuses move as the work moves on GitHub: drafts, reviews, merges and closes. The status names are configurable.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-soft" id="status">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Status rules</p>
+        <h2>Statuses that follow GitHub</h2>
+        <p>Linear moves when something changes on GitHub. Between changes, an issue stays where you put it.</p>
+      </div>
+      <div class="status-grid">
+        <div class="card">
+          <h3 class="card-title">On GitHub, then in Linear</h3>
+          <ul class="mapping">
+            <li><span>Issue open, or your review is requested</span><svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg><span><span class="status status-todo">Todo</span></span></li>
+            <li><span>Pull request in draft</span><svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg><span><span class="status status-progress">In Progress</span></span></li>
+            <li><span>Pull request open, or you've reviewed it</span><svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg><span><span class="status status-review">In Review</span></span></li>
+            <li><span>Pull request merged, or issue closed as completed</span><svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg><span><span class="status status-done">Done</span></span></li>
+            <li><span>Pull request closed unmerged, or issue closed as not planned</span><svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg><span><span class="status status-canceled">Canceled</span></span></li>
+          </ul>
+          <p class="card-foot">An issue's Linear issue follows its pull request until the issue itself is closed. The <a href="./docs/sync-rules.html#status-rules">sync rules</a> cover every case.</p>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">An issue and its fix, tracked once</h3>
+          <p class="card-sub">You're assigned <code>acme/api#252</code>, and open <code>acme/api#335</code>, whose description says “Part of #252”.</p>
+          <ol class="timeline">
+            <li>
+              <p><strong>ferryGL creates one Linear issue</strong>, “Store shared configuration once #252”, and links both GitHub URLs to it.</p>
+              <span class="status status-review">In Review</span>
+            </li>
+            <li>
+              <p><strong>#335 merges while #252 stays open.</strong> The work isn't done until the GitHub issue is closed.</p>
+              <span class="status status-review">In Review</span>
+            </li>
+            <li>
+              <p><strong>#252 is closed as completed.</strong></p>
+              <span class="status status-done">Done</span>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="how-it-works">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">How it works</p>
+        <h2>A command you run, not a service you host</h2>
+        <p>Run ferryGL by hand or on a schedule. It has no server and no database.</p>
+      </div>
+
+      <div class="flow" aria-label="GitHub is read by ferryGL, which writes to your Linear workspace">
+        <div class="card flow-node">
+          <div class="flow-logo"><!-- include: _icon-github.html --></div>
+          <h3>GitHub</h3>
+          <p>Read-only searches, with your own token</p>
+        </div>
+        <div class="flow-link" aria-hidden="true"><span>reads</span></div>
+        <div class="card flow-node is-center">
+          <div class="flow-logo"><img src="./assets/icon-256.png" alt="" width="48" height="48"></div>
+          <h3>ferryGL</h3>
+          <p>Plans the changes on your machine, and shows them before making them</p>
+        </div>
+        <div class="flow-link" aria-hidden="true"><span>writes</span></div>
+        <div class="card flow-node">
+          <div class="flow-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 1.5 1.5L11 8"/><path d="M13 9.5h4"/><path d="m7 14.5 1.5 1.5L11 13.5"/><path d="M13 15h4"/></svg></div>
+          <h3>Your Linear</h3>
+          <p>Issues assigned to you, with your personal API key</p>
+        </div>
+      </div>
+
+      <ol class="steps-4">
+        <li class="card">
+          <h3>Read GitHub</h3>
+          <p>For each route in your config (some repositories and the Linear team they go to), ferryGL searches GitHub once for each of your roles.</p>
+        </li>
+        <li class="card">
+          <h3>Look up Linear</h3>
+          <p>It finds the Linear issues it made before by their links to GitHub, and checks for issues you made by hand that mention the item.</p>
+        </li>
+        <li class="card">
+          <h3>Plan</h3>
+          <p>It compares GitHub with Linear and lists the changes: create an issue, link one, or move a status.</p>
+        </li>
+        <li class="card">
+          <h3>Apply</h3>
+          <p>With <code>--apply</code>, it makes those changes in Linear. Without it, nothing is written.</p>
+        </li>
+      </ol>
+
+      <p class="note">On each Linear issue, ferryGL records the last GitHub state it acted on, in the metadata of the GitHub link. That's how it tells whether something changed since the last run, and why it leaves your own edits alone.</p>
+    </div>
+  </section>
+
+  <section class="section section-soft" id="safety">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Safety</p>
+        <h2>Safe in repositories that belong to someone else</h2>
+        <p>Private repositories often belong to a client, and their contents may be covered by an agreement. ferryGL is careful by default.</p>
+      </div>
+      <div class="safety-grid">
+        <div class="card feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4.5 6v6c0 4.6 3.2 8.2 7.5 9 4.3-.8 7.5-4.4 7.5-9V6L12 3Z"/><path d="m9 12 2 2 4-4"/></svg></div>
+          <h3>Read-only on GitHub</h3>
+          <p>It only sends read queries, and never comments, labels or changes anything there. A read-only token is enough.</p>
+        </div>
+        <div class="card feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <h3>Preview first</h3>
+          <p><code>ferrygl sync</code> only shows what it would do. <code>ferrygl sync --apply</code> does it.</p>
+        </div>
+        <div class="card feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+          <h3>Your edits win</h3>
+          <p>A status moves only when something changes on GitHub. If you move an issue by hand, it stays where you put it.</p>
+        </div>
+        <div class="card feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="m16 11 2 2 4-4"/></svg></div>
+          <h3>Only your issues</h3>
+          <p>It changes only Linear issues assigned to you, never a teammate's, and never deletes issues or links.</p>
+        </div>
+        <div class="card feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5L3 5Z"/></svg></div>
+          <h3>Little is copied</h3>
+          <p>Titles, numbers, repository names, links and states. Descriptions only if you turn them on. Never comments or other people's names.</p>
+        </div>
+        <div class="card feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/></svg></div>
+          <h3>Safe to rerun</h3>
+          <p>It finds what it made before by its links to GitHub, so running it again, even after a run that stopped halfway, never creates duplicates.</p>
+        </div>
+      </div>
+      <div class="section-cta">
+        <a class="button button-secondary" href="./docs/data-and-privacy.html">
+          What ferryGL reads, writes and keeps
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="quick-start">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Quick start</p>
+        <h2>From install to first sync</h2>
+        <p>You need Python 3.11 or later, a GitHub account that can read the repositories, and a Linear workspace.</p>
+      </div>
+      <ol class="quickstart">
+        <li class="card qs-step">
+          <h3>Install ferryGL</h3>
+          <p>With pipx, as here, or with <code>uv tool install ferrygl</code> or <code>pip install ferrygl</code>.</p>
+          <div class="code-block"><pre><span class="c-prompt">$ </span>pipx install ferrygl</pre></div>
+        </li>
+        <li class="card qs-step">
+          <h3>Connect your accounts</h3>
+          <p>Sign in with the GitHub CLI, and create a personal API key in <a href="https://linear.app/settings/api">Linear's API settings</a>.</p>
+          <div class="code-block"><pre><span class="c-prompt">$ </span>gh auth login
+<span class="c-prompt">$ </span>export LINEAR_API_KEY=&lt;your key&gt;</pre></div>
+        </li>
+        <li class="card qs-step">
+          <h3>Write a config file</h3>
+          <p>Save it as <code>~/.config/ferrygl/ferrygl.toml</code>. A route sends some repositories, or every repository of an owner with <code>"acme/*"</code>, to one Linear team.</p>
+          <div class="code-block"><pre><span class="c-table">[[route]]</span>
+<span class="c-key">repos</span> = [<span class="c-string">"acme/api"</span>, <span class="c-string">"acme/web"</span>]
+<span class="c-key">team</span> = <span class="c-string">"ENG"</span>          <span class="c-comment"># Linear team key or name</span>
+
+<span class="c-table">[sync]</span>
+<span class="c-key">since</span> = <span class="c-num">2026-09-01</span>    <span class="c-comment"># skip older items</span></pre></div>
+        </li>
+        <li class="card qs-step">
+          <h3>Check, preview, then apply</h3>
+          <p><code>check</code> confirms your credentials, repositories and Linear setup. <code>sync</code> shows the plan. Nothing is written to Linear until you add <code>--apply</code>.</p>
+          <div class="code-block"><pre><span class="c-prompt">$ </span>ferrygl check
+<span class="c-prompt">$ </span>ferrygl sync
+<span class="c-prompt">$ </span>ferrygl sync --apply</pre></div>
+        </li>
+      </ol>
+      <div class="section-cta">
+        <a class="button button-primary" href="./docs/getting-started.html">
+          Read the full guide
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-soft" id="docs">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Documentation</p>
+        <h2>Everything in detail</h2>
+        <p>Setup, every setting, and exactly how ferryGL decides what to change.</p>
+      </div>
+      <div class="docs-grid">
+        <a class="card doc-card" href="./docs/getting-started.html">
+          <h3>Getting started<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></h3>
+          <p>Install, set up the two credentials, and do a careful first run.</p>
+        </a>
+        <a class="card doc-card" href="./docs/configuration.html">
+          <h3>Configuration<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></h3>
+          <p>Every setting in <code>ferrygl.toml</code>, with its default.</p>
+        </a>
+        <a class="card doc-card" href="./docs/sync-rules.html">
+          <h3>Sync rules<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></h3>
+          <p>Which items are synced, how they map to Linear issues, and how statuses move.</p>
+        </a>
+        <a class="card doc-card" href="./docs/commands.html">
+          <h3>Commands<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></h3>
+          <p>Reading the plan, exit statuses, running on a schedule, and fixing errors.</p>
+        </a>
+        <a class="card doc-card" href="./docs/data-and-privacy.html">
+          <h3>Data and privacy<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></h3>
+          <p>What ferryGL reads, what it writes to Linear, and what it keeps.</p>
+        </a>
+        <a class="card doc-card" href="./docs/architecture.html">
+          <h3>Architecture<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></h3>
+          <p>How a run works inside, request costs, retries and limits.</p>
+        </a>
+      </div>
+
+      <div class="card limits">
+        <div>
+          <h3>What it doesn't do</h3>
+          <p>ferryGL does one job: it keeps your own Linear issues in step with your GitHub work.</p>
+        </div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg><span>Write anything to GitHub.</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg><span>Sync both ways, or keep descriptions and comments in sync.</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg><span>React instantly. There are no webhooks: Linear catches up each time ferryGL runs.</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg><span>Sync every issue in a repository for a whole team. Linear's GitHub integration does that when you can install it.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="cta-band">
+        <h2>Stop copying issues by hand</h2>
+        <p>Install ferryGL, preview the first sync, and let Linear keep up with your GitHub work.</p>
+        <div class="cta-row">
+          <a class="button button-primary" href="./docs/getting-started.html">Get started</a>
+          <a class="button button-secondary" href="https://github.com/ao-batouche/ferryGL">View on GitHub</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- include: _footer.html -->
+</body>
+</html>

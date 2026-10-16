@@ -6,6 +6,7 @@ build/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
+/_site/
 
 # Personal configuration and credentials
 /ferrygl.toml
