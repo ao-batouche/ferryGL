@@ -162,6 +162,10 @@ class _Planner:
                 key = owners[own.issue.id]
                 riders[key].append(pr)
                 self.linked[key].append(pr)
+            elif own is not None and "linked_to" in _recorded(own.metadata):
+                # It rode with an issue that has left your scope. That Linear issue is the
+                # issue's, so it stays as it is rather than follow the pull request alone.
+                continue
             else:
                 solo_prs.append(pr)
 
