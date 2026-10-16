@@ -62,14 +62,24 @@ Each line shows the GitHub item, its [kind](sync-rules.md#whats-in-scope) (`issu
 
 [Sync rules](sync-rules.md) explains when each action happens.
 
+With [`[sync] comment = true`](configuration.md#sync), every action except `skip` also posts a
+comment on its Linear issue, and the plan shows it under the change:
+
+```text
+acme/api#252  issue     update  ENG-7 Todo -> In Review
+              comment: (BY-FGL) Status Todo → In Review: acme/api#252 has a pull request open for review.
+```
+
 ### `--apply`
 
 `ferrygl sync --apply` prints the same plan, makes the changes, and prints a line such as
 `created ENG-12 for acme/api#360` for each new Linear issue.
 
-For each change, ferryGL sets the status first and then writes the links. If the status
-update fails, the new GitHub state isn't recorded, so the next run tries again. A failed write
-is reported, and the run carries on with the next change.
+For each change, ferryGL sets the status first, then posts its comment (with
+`[sync] comment = true`), and then writes the links. If the status update or the comment
+fails, the new GitHub state isn't recorded, so the next run tries again. If writing the links
+fails after the comment was posted, the next run comments again. A failed write is reported,
+and the run carries on with the next change.
 
 ## Environment variables
 
@@ -139,9 +149,11 @@ A template workflow is planned.
 **A run stopped halfway.** Run it again. ferryGL finds Linear issues by their GitHub links,
 so it carries on where it stopped without creating duplicates.
 
-**A network error while creating an issue.** ferryGL doesn't retry creating an issue after a
-network or server error, because Linear may have created it anyway. If it did, the next sync finds it through the GitHub URL in
-its description and adopts it.
+**A network error while creating an issue or a comment.** ferryGL doesn't retry creating an
+issue or a comment after a network or server error, because Linear may have created it anyway.
+If it created the issue, the next sync finds it through the GitHub URL in its description and
+adopts it. If it posted the comment, the next sync makes the change again and may post a
+second comment.
 
 **Runs are slow, or hit rate limits.** ferryGL waits and retries when GitHub or Linear asks it
 to slow down. Set `since`, or turn off `prs_with_commits` ([Roles](configuration.md#roles)),

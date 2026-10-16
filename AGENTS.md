@@ -17,8 +17,8 @@ Don't break these without an explicit decision from the project owner.
 1. **GitHub is read-only.** `src/ferrygl/github.py` only runs GraphQL queries. Never add a
    mutation, comment, label or status write to GitHub.
 2. **Only the user's Linear issues.** ferryGL changes a Linear issue only if it is assigned
-   to the API key's owner (`viewer_id`). It never deletes issues or links, and never edits
-   titles or descriptions after creating an issue.
+   to the API key's owner (`viewer_id`). It never deletes issues, links or comments, and never
+   edits titles, descriptions or comments after creating them.
 3. **The user's edits win.** A Linear status moves only when the GitHub state recorded on the
    link changes. A link with no recorded state is a first sync, which may close an issue
    (done or canceled) but never reopens or otherwise moves it.
@@ -27,12 +27,13 @@ Don't break these without an explicit decision from the project owner.
    Linear issue's status on its own.
 5. **Reruns are idempotent.** Existing Linear issues are found by their GitHub links
    (`attachmentsForURL`), so a rerun never duplicates. Only idempotent requests are retried
-   after network errors or 5xx responses; `issueCreate` is not.
+   after network errors or 5xx responses; `issueCreate` and `commentCreate` are not.
 6. **The planner is pure.** `src/ferrygl/plan.py` does no I/O. All reads happen before
    planning, and all writes happen after it, in `src/ferrygl/sync.py`.
 7. **Copy as little as possible.** By default only titles, numbers, repositories, URLs, states
    and the user's role reach Linear. Descriptions are copied only when `[copy] description`
-   is on. Never copy comments or other people's names.
+   is on. Never copy comments or other people's names. ferryGL's own comments
+   (`[sync] comment`, off by default) name only GitHub items, states and status names.
 8. **No surprise writes.** `ferrygl sync` without `--apply` must write nothing. A setup
    problem (missing team, project, state or label) stops the run before GitHub is read or
    Linear is written.
@@ -51,6 +52,8 @@ Users' Linear workspaces keep what ferryGL writes, so treat these as compatibili
     `owner/repo#12`
 
   ferryGL replaces only its own `ferrygl_*` keys and keeps any others.
+- **Comment marker:** every comment ferryGL posts starts with `(BY-FGL)` (`COMMENT_MARKER` in
+  `plan.py`). People search and filter on it, so keep it.
 - **State keys** (`github_state` in `plan.py`): `issue:open`, `issue:open:pr_draft`,
   `issue:open:pr_open`, `issue:open:pr_merged`, `issue:closed:completed`,
   `issue:closed:not_planned`, `pr:draft`, `pr:open`, `pr:merged`, `pr:closed`,

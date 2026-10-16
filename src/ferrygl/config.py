@@ -66,6 +66,7 @@ class SyncOptions:
     prs_with_commits: bool = True  # someone else's pull request with a commit you wrote
     since: date | None = None
     label: str | None = None
+    comment: bool = False  # add a (BY-FGL) comment to each Linear issue ferryGL changes
 
 
 @dataclass(frozen=True)
@@ -189,7 +190,7 @@ def _covers(pattern: str, repo: str) -> bool:
 
 def _sync(raw: dict[str, Any], where: str) -> SyncOptions:
     flags = SYNC_FLAGS
-    _check_keys(raw, {*flags, "since", "label"}, where)
+    _check_keys(raw, {*flags, "since", "label", "comment"}, where)
     since = raw.get("since")
     if isinstance(since, datetime):
         since = since.date()
@@ -204,6 +205,7 @@ def _sync(raw: dict[str, Any], where: str) -> SyncOptions:
         **{flag: _bool(raw, flag, True, where) for flag in flags},
         since=since,
         label=_optional_str(raw, "label", where),
+        comment=_bool(raw, "comment", False, where),
     )
 
 

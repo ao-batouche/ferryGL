@@ -30,6 +30,7 @@ github_user = "alice"
 [sync]
 since = 2026-09-01            # ignore items not updated since this date
 label = "ferryGL"             # optional: an existing label added to every issue ferryGL creates
+comment = false               # true: comment "(BY-FGL) ..." on each Linear issue ferryGL changes
 # Roles, all true by default: issues_assigned, issues_created, prs_created, prs_assigned,
 # prs_reviewed, review_requests, prs_with_commits
 
@@ -77,6 +78,7 @@ optionally, one project. Add one `[[route]]` table for each destination.
 |---|---|---|
 | `since` | none | Ignore items not updated on GitHub since this date |
 | `label` | none | The name of an existing Linear label to add to every issue ferryGL creates |
+| `comment` | `false` | Post a comment starting with `(BY-FGL)` on a Linear issue each time ferryGL changes it |
 | [role flags](#roles) | `true` | Which of your roles bring an item into Linear |
 
 **`since`** is a TOML date (`since = 2026-09-01`) or a string (`since = "2026-09-01"`). It
@@ -86,6 +88,25 @@ described below. Without it, ferryGL looks at items of any age. An item that fal
 
 **`label`** must already exist, in the route's team or as a workspace label. If both exist,
 the team's label is used. ferryGL doesn't create labels.
+
+**`comment`** marks every change ferryGL makes in Linear. With `comment = true`, each `create`,
+`adopt`, `link`, `update` and `record` in the [plan](commands.md#reading-the-plan) also posts a
+comment on its Linear issue. The comment starts with `(BY-FGL)`, so you can tell ferryGL's
+changes from your own, and says what changed and why:
+
+```text
+(BY-FGL) Created from acme/api#12. Status Todo: acme/api#12 is open.
+(BY-FGL) Linked acme/api#15, a pull request that refers to acme/api#12.
+(BY-FGL) Status In Review → Done: acme/api#15 was merged.
+(BY-FGL) Status stays In Review: acme/api#12's pull request was merged, and the issue is still open.
+```
+
+- Comments name only GitHub items (`owner/repo#number`), their GitHub state and Linear status
+  names. They never include titles or descriptions.
+- `ferrygl sync` prints each comment under its change, so you can read them before `--apply`.
+- They're posted as you, the API key's owner. Linear notifies anyone else subscribed to the
+  issue, as it would for a comment you wrote.
+- If you limited the API key's permissions, make sure it can create comments.
 
 ### Roles
 

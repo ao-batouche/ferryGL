@@ -121,3 +121,4 @@ class Change:
     status_to: str | None = None  # Linear state name to set
     links: tuple[Link, ...] = ()
     note: str | None = None
+    comment: str | None = None  # posted on the Linear issue, with `[sync] comment` on

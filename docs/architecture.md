@@ -73,8 +73,8 @@ compatibility contract: renaming one would make every recorded link look changed
 - `attachmentsForURL` for up to 25 URLs per request;
 - your issues in the route's team, 50 per page, only when some item has no Linear issue of
   yours yet;
-- with `--apply`, one request per write: `issueCreate`, `attachmentCreate`,
-  `attachmentUpdate` or `issueUpdate`.
+- with `--apply`, one request per write: `issueCreate`, `issueUpdate`, `commentCreate` (with
+  `[sync] comment = true`, one per change), `attachmentCreate` or `attachmentUpdate`.
 
 ## Retries
 
@@ -84,9 +84,10 @@ Both clients send GraphQL requests through `_http.py`, with up to three attempts
   wait `Retry-After` asks for (at most 60 seconds), or 2 and then 4 seconds.
 - **Network errors and HTTP 502, 503 and 504** are retried only for idempotent requests:
   network errors after 2 and then 4 seconds, server errors after the wait `Retry-After` asks
-  for, or 2 and then 4 seconds. `issueCreate` isn't idempotent: Linear may have created the issue
-  before the connection failed. ferryGL reports the error instead, and the next run adopts
-  the issue through the GitHub URL in its description.
+  for, or 2 and then 4 seconds. `issueCreate` and `commentCreate` aren't idempotent: Linear
+  may have created the issue or comment before the connection failed. ferryGL reports the
+  error instead. The next run adopts such an issue through the GitHub URL in its description,
+  and makes a change whose comment failed again, which can post the comment twice.
 - **GraphQL errors** are reported with the server's own message.
 
 ## Limits

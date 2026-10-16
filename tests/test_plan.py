@@ -14,7 +14,7 @@ from builders import (
     review,
 )
 
-from ferrygl.config import Config
+from ferrygl.config import Config, SyncOptions
 from ferrygl.model import Action, Attachment, Change, GitHubItem, LinearIssue, Role
 from ferrygl.plan import PlanInput, github_state, plan
 
@@ -430,6 +430,94 @@ def test_pull_request_with_its_own_linear_issue_stays_there():
     assert run(items, links) == []
 
 
+# Comments, with [sync] comment on
+
+COMMENTS = config(sync=SyncOptions(comment=True))
+
+
+def comments(changes: list[Change]) -> list[str | None]:
+    return [change.comment for change in changes]
+
+
+def test_no_comments_by_default():
+    home = linear_issue("ENG-1", state="Todo")
+    items = [issue(12), pr(15, refs=(12,)), pr(16)]
+
+    changes = run(items, [attachment(items[0], home, recorded="issue:open")])
+
+    assert [c.action.value for c in changes] == ["update", "link", "create"]
+    assert comments(changes) == [None, None, None]
+
+
+def test_comment_on_a_new_issue_names_its_items_and_status():
+    changes = run([issue(12), pr(15, refs=(12,))], cfg=COMMENTS)
+
+    assert comments(changes) == [
+        "(BY-FGL) Created from acme/api#12 and acme/api#15. "
+        "Status In Review: acme/api#12 has a pull request open for review."
+    ]
+
+
+def test_comments_on_a_status_change_and_a_new_link():
+    home = linear_issue("ENG-1", state="Todo")
+    items = [issue(12), pr(15, refs=(12,))]
+
+    changes = run(items, [attachment(items[0], home, recorded="issue:open")], cfg=COMMENTS)
+
+    assert comments(changes) == [
+        "(BY-FGL) Status Todo → In Review: acme/api#12 has a pull request open for review.",
+        "(BY-FGL) Linked acme/api#15, a pull request that refers to acme/api#12.",
+    ]
+
+
+def test_comment_when_a_pull_request_is_merged():
+    home = linear_issue("ENG-1", state="In Review")
+    item = pr(15, state="MERGED")
+
+    changes = run([item], [attachment(item, home, recorded="pr:open")], cfg=COMMENTS)
+
+    assert comments(changes) == ["(BY-FGL) Status In Review → Done: acme/api#15 was merged."]
+
+
+def test_comment_when_only_the_github_state_is_recorded():
+    home = linear_issue("ENG-1", state="In Review")
+    items = [issue(12), pr(15, state="MERGED", refs=(12,))]
+    links = [
+        attachment(items[0], home, recorded="issue:open:pr_open"),
+        attachment(items[1], home),
+    ]
+
+    changes = run(items, links, cfg=COMMENTS)
+
+    assert summary(changes) == [("record", "acme/api#12", "ENG-1", None)]
+    assert comments(changes) == [
+        "(BY-FGL) Status stays In Review: "
+        "acme/api#12's pull request was merged, and the issue is still open."
+    ]
+
+
+def test_comment_on_an_adopted_issue_that_github_has_closed():
+    mine = linear_issue("ENG-3", state="In Progress", title="Fix the importer #12")
+    item = issue(12, state="CLOSED", reason="DUPLICATE")
+
+    changes = run([item], candidates=[mine], cfg=COMMENTS)
+
+    assert summary(changes) == [("adopt", "acme/api#12", "ENG-3", "Canceled")]
+    assert comments(changes) == [
+        "(BY-FGL) Linked acme/api#12. "
+        "Status In Progress → Canceled: acme/api#12 was closed as duplicate."
+    ]
+
+
+def test_skipped_items_get_no_comment():
+    mentions = "https://github.com/acme/api/pull/15"
+    candidates = [linear_issue("ENG-3", description=mentions), linear_issue("ENG-8", title="#15")]
+
+    changes = run([pr(15)], candidates=candidates, cfg=COMMENTS)
+
+    assert [(c.action.value, c.comment) for c in changes] == [("skip", None)]
+
+
 # GitHub state derivation
 
 
@@ -465,3 +553,25 @@ def test_github_state(item, linked, key, on_change, on_create):
     state = github_state(item, linked)
 
     assert (state.key, state.on_change, state.on_create) == (key, on_change, on_create)
+
+
+@pytest.mark.parametrize(
+    ("item", "linked", "said"),
+    [
+        (issue(1), [], "acme/api#1 is open"),
+        (issue(1), [pr(2, draft=True)], "acme/api#1 has a draft pull request"),
+        (issue(1, state="CLOSED", reason="COMPLETED"), [], "acme/api#1 was closed as completed"),
+        (
+            issue(1, state="CLOSED", reason="NOT_PLANNED"),
+            [],
+            "acme/api#1 was closed as not planned",
+        ),
+        (pr(2, draft=True), [], "acme/api#2 is a draft"),
+        (pr(2), [], "acme/api#2 is open for review"),
+        (pr(2, state="CLOSED"), [], "acme/api#2 was closed without being merged"),
+        (review(3), [], "a review is requested on acme/api#3"),
+        (review(3, reviewed=True), [], "acme/api#3 was reviewed"),
+    ],
+)
+def test_github_state_summary_for_comments(item, linked, said):
+    assert github_state(item, linked).summary == said

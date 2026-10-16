@@ -55,7 +55,7 @@ It's built to be safe in repositories that belong to someone else:
   move an issue by hand, it stays where you put it.
 - **Nothing is deleted.** If an item leaves your scope, its Linear issue stays as it is.
 - **Little is copied.** Titles, numbers, repository names, links and states. Descriptions
-  only if you turn them on. Never comments or other people's names.
+  only if you turn them on. Never GitHub comments or other people's names.
 
 ## How it works
 

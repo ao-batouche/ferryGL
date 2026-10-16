@@ -243,15 +243,25 @@ def _apply(
             project_id=target.project_id,
             label_ids=[target.label_id] if target.label_id else [],
         )
-        for link in change.links:
-            linear.create_attachment(issue.id, link)
+        try:
+            # The comment before the links: without links, the next run adopts the issue
+            # through the GitHub URL in its description, and comments then.
+            if change.comment:
+                linear.create_comment(issue.id, change.comment)
+            for link in change.links:
+                linear.create_attachment(issue.id, link)
+        except LinearError as exc:
+            raise LinearError(f"{issue.identifier} was created, but {exc}") from None
         return issue.identifier
 
     assert change.issue is not None
-    # Status first: if it fails, the GitHub state isn't recorded and the next run retries.
+    # Status, then comment, then links: if either of the first two fails, the GitHub state
+    # isn't recorded and the next run tries again.
     if change.status_to:
         state_id = _state_id(states, change.issue.team_id, change.status_to)
         linear.update_issue_state(change.issue.id, state_id)
+    if change.comment:
+        linear.create_comment(change.issue.id, change.comment)
     for link in change.links:
         if link.attachment_id:
             linear.update_attachment(link)
@@ -288,6 +298,8 @@ def _print_changes(changes: Sequence[Change], out: TextIO) -> None:
     width = max((len(change.item.label) for change in changes), default=0)
     for change in changes:
         print(format_change(change, width), file=out)
+        if change.comment:
+            print(f"{'':<{width}}  comment: {change.comment}", file=out)
 
 
 def _print_summary(counts: Counter[str], applied: bool, failures: int, out: TextIO) -> None:

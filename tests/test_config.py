@@ -21,6 +21,7 @@ def test_minimal_config_uses_defaults():
     assert config.status == StatusNames()
     assert config.sync.issues_assigned and config.sync.review_requests
     assert config.copy_description is False
+    assert config.sync.comment is False
 
 
 def test_full_config_file(tmp_path: Path):
@@ -41,6 +42,7 @@ team = "ENG"
 since = 2026-09-01
 label = "ferryGL"
 review_requests = false
+comment = true
 
 [titles]
 issue = "{repo}#{number}"
@@ -64,6 +66,7 @@ api_key_file = "~/linear.key"
     assert config.routes[1].single_repo is None
     assert config.sync.since == date(2026, 9, 1)
     assert config.sync.review_requests is False
+    assert config.sync.comment is True
     assert config.titles.issue == "{repo}#{number}"
     assert config.titles.pr == Titles().pr
     assert config.status.in_review == "Review"
@@ -88,6 +91,7 @@ def test_since_accepts_a_string_date():
         ({"route": [{"repos": ["acme/api"], "team": "ENG", "colour": 1}]}, "`colour`"),
         ({**MINIMAL, "sync": {"since": "soon"}}, "must be a date"),
         ({**MINIMAL, "sync": {"label": ""}}, "non-empty string"),
+        ({**MINIMAL, "sync": {"comment": "yes"}}, "`comment` must be true or false"),
         ({**MINIMAL, "titles": {"issue": "{name}"}}, "uses {name}"),
         ({**MINIMAL, "copy": {"description": "yes"}}, "true or false"),
     ],
