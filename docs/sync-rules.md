@@ -73,10 +73,9 @@ Some cases are handled specially:
   Otherwise each issue gets a new Linear issue, and the pull request keeps its own.
 - If the reference is later edited out of the pull request, its link stays on the issue's
   Linear issue, and it keeps counting toward that issue's status.
-- If the issue leaves your scope while the pull request is still in it, the pull request
-  takes over the issue's Linear issue, as if it were its own. On the next run it only closes
-  the Linear issue, if the pull request was merged or closed; after that, the pull request's
-  own changes move its status.
+- If the issue leaves your scope while the pull request is still in it, the issue's Linear
+  issue stays as it is: the pull request doesn't move it on its own. If the issue comes back
+  into scope, the two ride together again.
 
 ## Status rules
 
@@ -181,6 +180,5 @@ link to the right one by hand, and the next run picks it up.
 - Change a title or description after creating the issue.
 - Reopen a Linear issue on its first sync.
 - Clean up after an item leaves your scope. If you're unassigned, a review request is
-  withdrawn, or `since` moves past an item, its Linear issue stays as it is. The one
-  exception is an issue whose [pull request rides with it](#pull-requests-that-ride-with-an-issue)
-  and stays in scope.
+  withdrawn, or `since` moves past an item, its Linear issue stays as it is, even if a pull
+  request that [rode with it](#pull-requests-that-ride-with-an-issue) is still in scope.

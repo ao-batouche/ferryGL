@@ -394,15 +394,32 @@ def test_issue_joins_the_linear_issue_its_pull_request_already_has():
     assert [link.url for link in change.links] == ["https://github.com/acme/api/issues/12"]
 
 
-def test_a_rider_link_that_becomes_a_home_counts_as_a_first_sync():
-    # You canceled ENG-7 by hand; #12 then left your scope while its PR stays open.
-    home = linear_issue("ENG-7", state="Canceled")
-    item = pr(15)
+@pytest.mark.parametrize(
+    "item",
+    [pr(15), pr(15, draft=True), pr(15, state="MERGED"), pr(15, state="CLOSED")],
+    ids=["open", "draft", "merged", "closed"],
+)
+def test_a_pull_request_whose_issue_left_your_scope_leaves_its_linear_issue_alone(item):
+    # PR 15 rode with #12 on ENG-7. You were then unassigned from #12, so it's no longer
+    # synced, while PR 15 still is. ENG-7 is #12's, so PR 15 doesn't move it.
+    home = linear_issue("ENG-7", state="In Review")
     rider_meta = {"ferrygl_v": 1, "ferrygl_kind": "pr", "ferrygl_linked_to": "acme/api#12"}
 
-    [change] = run([item], [attachment(item, home, metadata=rider_meta)])
+    assert run([item], [attachment(item, home, metadata=rider_meta)]) == []
 
-    assert summary([change]) == [("record", "acme/api#15", "ENG-7", None)]
+
+def test_a_pull_request_rides_again_when_its_issue_comes_back_into_scope():
+    # Same as above, then you're assigned to #12 again: the two share ENG-7 once more.
+    home = linear_issue("ENG-7", state="In Review")
+    items = [issue(12), pr(15, state="MERGED", refs=(12,))]
+    rider_meta = {"ferrygl_v": 1, "ferrygl_kind": "pr", "ferrygl_linked_to": "acme/api#12"}
+    links = [
+        attachment(items[0], home, recorded="issue:open:pr_open"),
+        attachment(items[1], home, metadata=rider_meta),
+    ]
+
+    # #12 is still open, so the merged fix doesn't make ENG-7 done.
+    assert summary(run(items, links)) == [("record", "acme/api#12", "ENG-7", None)]
 
 
 def test_pull_request_whose_link_sits_on_an_issue_home_still_rides_with_it():
