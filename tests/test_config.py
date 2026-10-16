@@ -80,6 +80,15 @@ def test_since_accepts_a_string_date():
     assert config.sync.since == date(2026, 9, 1)
 
 
+def test_title_templates_can_use_conversions_format_specs_and_literal_braces():
+    titles = {"issue": "{title!s} #{number:05}", "pr": "{{{repo}}} {title:.40}"}
+
+    config = parse({**MINIMAL, "titles": titles})
+
+    assert config.titles.issue == "{title!s} #{number:05}"
+    assert config.titles.pr == "{{{repo}}} {title:.40}"
+
+
 @pytest.mark.parametrize(
     ("data", "message"),
     [
@@ -93,6 +102,10 @@ def test_since_accepts_a_string_date():
         ({**MINIMAL, "sync": {"label": ""}}, "non-empty string"),
         ({**MINIMAL, "sync": {"comment": "yes"}}, "`comment` must be true or false"),
         ({**MINIMAL, "titles": {"issue": "{name}"}}, "uses {name}"),
+        ({**MINIMAL, "titles": {"issue": "{title!x} #{number}"}}, "Unknown conversion"),
+        ({**MINIMAL, "titles": {"pr": "{title} - #{number:abc}"}}, "Invalid format specifier"),
+        ({**MINIMAL, "titles": {"involved": "{title:{width}}"}}, "uses {width}"),
+        ({**MINIMAL, "titles": {"issue": "{title"}}, "expected '}'"),
         ({**MINIMAL, "copy": {"description": "yes"}}, "true or false"),
     ],
 )

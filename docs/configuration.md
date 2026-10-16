@@ -144,8 +144,9 @@ Title templates for the Linear issues ferryGL creates.
 | `pr` | Pull requests you opened | `"{title} - #{number}"` |
 | `involved` | Someone else's pull requests you're part of | `"[PR] {title} - #{number}"` |
 
-Templates can use `{title}`, `{number}` and `{repo}` (as `owner/name`). Any other field is an
-error. The templates apply to every route.
+Templates can use `{title}`, `{number}` and `{repo}` (as `owner/name`). Any other field, or a
+template ferryGL can't fill in, is an error, reported before anything is read from GitHub. The
+templates apply to every route.
 
 ferryGL sets a title only when it creates the Linear issue. You can rename the issue
 afterwards, and ferryGL won't change it back.
