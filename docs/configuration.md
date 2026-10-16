@@ -198,3 +198,39 @@ ferryGL checks the whole file before doing anything else:
 
 `ferrygl check` goes further: it confirms that every repository is readable, and that the
 teams, projects, states and label exist in Linear.
+
+## Completion and checks in your editor
+
+ferryGL publishes a [JSON Schema for `ferrygl.toml`](https://oussamabatouche.com/ferryGL/ferrygl.schema.json).
+With it, your editor completes setting names, shows what each one does and its default, and
+marks unknown keys and invalid values as you type.
+
+In VS Code, install the
+[Even Better TOML](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml)
+extension, and start the file with this line:
+
+```toml
+#:schema https://oussamabatouche.com/ferryGL/ferrygl.schema.json
+
+[[route]]
+repos = ["acme/api"]
+team = "ENG"
+```
+
+Other editors that use [Taplo](https://taplo.tamasfe.dev/), the TOML language server behind
+Even Better TOML, read the same line.
+
+To leave the file as it is, associate the schema in your VS Code user settings instead:
+
+```json
+"evenBetterToml.schema.associations": {
+  ".*/ferrygl\\.toml$": "https://oussamabatouche.com/ferryGL/ferrygl.schema.json"
+}
+```
+
+The key is a regular expression matched against the file's location, so this one applies to
+every file named `ferrygl.toml`.
+
+- Use the `#:schema` comment, not a `"$schema"` key: ferryGL rejects unknown keys.
+- The schema can't check everything. ferryGL itself reports routes that overlap, and
+  `ferrygl check` confirms what exists in Linear.

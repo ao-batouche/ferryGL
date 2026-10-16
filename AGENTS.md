@@ -62,7 +62,9 @@ Users' Linear workspaces keep what ferryGL writes, so treat these as compatibili
   Add a key, or bump `ferrygl_v` and handle the old value.
 - **Config keys** (`config.py`): unknown keys are rejected, so adding a key is safe but
   renaming or removing one breaks existing files. Keep the old name working, with a clear
-  error or warning, for at least one release.
+  error or warning, for at least one release. Describe each key in `site/ferrygl.schema.json`
+  too; `tests/test_schema.py` fails until it matches. Users point their editors at that file's
+  URL, https://oussamabatouche.com/ferryGL/ferrygl.schema.json, so don't move it.
 - **CLI:** commands `check` and `sync [--apply]`, `--config`, `FERRYGL_CONFIG`,
   `LINEAR_API_KEY`, and exit statuses 0 (ok), 1 (a route or write failed) and 2 (setup or
   config error).
@@ -81,6 +83,7 @@ Users' Linear workspaces keep what ferryGL writes, so treat these as compatibili
 | `tests/builders.py` | Builders for synthetic items, Linear issues and links |
 | `docs/` | User documentation: setup, configuration, sync rules, commands, data, architecture |
 | `site/` | The website: a hand-written home page, and `build.py`, which renders `docs/` into pages |
+| `site/ferrygl.schema.json` | JSON Schema for `ferrygl.toml`, published on the website for editors |
 
 ## Development
 
@@ -127,9 +130,9 @@ The README stays short: what ferryGL does, how it works, and a quick start. Deta
 | Page | Covers |
 |---|---|
 | `docs/getting-started.md` | Install, credentials, first run |
-| `docs/configuration.md` | Every config key and its default |
+| `docs/configuration.md` | Every config key and its default, and editor setup for the schema |
 | `docs/sync-rules.md` | Roles, homes, riding pull requests, status rules, adoption |
-| `docs/commands.md` | `check`, `sync`, plan actions, exit statuses, scheduling, errors |
+| `docs/commands.md` | `check`, `sync`, plan actions, exit statuses, scheduling, VS Code tasks, errors |
 | `docs/data-and-privacy.md` | What is read, written to Linear, and kept; link metadata |
 | `docs/architecture.md` | Run steps, state keys, request costs, retries, limits |
 
