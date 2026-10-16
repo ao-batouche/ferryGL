@@ -52,14 +52,17 @@ organization and a personal one for open source. Run `gh auth login` once for ea
 
 **Using a token instead of the CLI?** Set `GH_TOKEN` to a fine-grained personal access token
 with read access to *Issues*, *Pull requests* and *Metadata* on the repositories. Some
-organizations require an owner to approve fine-grained tokens, or block classic tokens.
+organizations require an owner to approve fine-grained tokens, or block classic tokens. A
+fine-grained token reads the repositories of one owner only, so if your routes cover several
+organizations, use the GitHub CLI and set `github_user` on each route.
 
-For each route, ferryGL uses the first token it finds:
+For each route, ferryGL finds its token this way:
 
-1. the GitHub CLI account named by the route's `github_user` (`gh auth token --user <name>`).
-   When `github_user` is set, the environment variables below are ignored for that route;
-2. `GH_TOKEN`, then `GITHUB_TOKEN`;
-3. the GitHub CLI's active account (`gh auth token`).
+1. With `github_user`, it asks the GitHub CLI for that account's token
+   (`gh auth token --user <name>`), and uses only that. The environment variables below are
+   ignored, and if the CLI has no token for the account, the route stops with an error.
+2. Otherwise it uses `GH_TOKEN`, then `GITHUB_TOKEN`,
+3. and then the GitHub CLI's active account (`gh auth token`).
 
 ## 3. Give ferryGL a Linear API key
 

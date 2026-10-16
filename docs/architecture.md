@@ -76,18 +76,21 @@ compatibility contract: renaming one would make every recorded link look changed
 **GitHub**, per route:
 
 - one query for the token's login;
-- one search per enabled role (up to seven), with 50 results per page;
-- for the commit scan (`prs_with_commits`), 25 pull requests per page, each with its first
+- one search per enabled role (up to seven), with 50 results per page. The
+  `prs_with_commits` search is the commit scan: 25 pull requests per page, each with its first
   100 commits. It reads every pull request in scope that you didn't open, so it's the most
   expensive part of a run. `since` bounds it.
 
-`check` also makes one request per repository to confirm it's readable.
+`check` runs no searches: only the login query, and one request per repository to confirm
+it's readable.
 
 **Linear**, per run:
 
 - one query for the API key's owner;
 - for each route, lookups for the team, its states (once per team), the project and the
   label;
+- the states of any other team where one of your linked Linear issues now lives, once per
+  team;
 - `attachmentsForURL` for up to 25 URLs per request;
 - your issues in the route's team, 50 per page, only when some item has no Linear issue of
   yours yet;
@@ -96,7 +99,8 @@ compatibility contract: renaming one would make every recorded link look changed
 
 ## Retries
 
-Both clients send GraphQL requests through `_http.py`, with up to three attempts per request:
+Both clients send GraphQL requests through `_http.py`, with up to three attempts per request.
+Each request times out after 30 seconds, which counts as a network error.
 
 - **Rate limits** (HTTP 429, or GitHub's 403 with `Retry-After`) are always retried, after the
   wait `Retry-After` asks for (at most 60 seconds), or 2 and then 4 seconds.

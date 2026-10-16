@@ -53,9 +53,11 @@ It's built to be safe in repositories that belong to someone else:
 - **Preview first.** `ferrygl sync` only shows what it would do. `ferrygl sync --apply` does it.
 - **Your edits win.** It moves a Linear status only when something changes on GitHub. If you
   move an issue by hand, it stays where you put it.
+- **Only your issues.** It changes only Linear issues assigned to you, never a teammate's.
 - **Nothing is deleted.** If an item leaves your scope, its Linear issue stays as it is.
 - **Little is copied.** Titles, numbers, repository names, links and states. Descriptions
-  only if you turn them on. Never GitHub comments or other people's names.
+  only if you turn them on. Never GitHub comments or other people's names. Its own comments,
+  off by default, name only GitHub items, states and statuses.
 
 ## How it works
 
@@ -64,8 +66,9 @@ ferryGL is a command you run by hand or on a schedule. It has no server and no d
 1. **Read GitHub.** For each *route* in your config (some repositories and the Linear team
    they go to), ferryGL searches GitHub once for each of your roles.
 2. **Look up Linear.** It finds the Linear issues it made before by their links to GitHub, so
-   running it again never creates duplicates. Before creating a new issue, it checks whether
-   you already made one by hand that mentions the GitHub item, and links that one instead.
+   running it again never creates duplicates. Before creating a new issue, it looks for one of
+   your Linear issues in the route's team that already mentions the GitHub item, and links that
+   one instead.
 3. **Plan.** It compares GitHub with Linear and lists the changes: create an issue, link one,
    or move a status.
 4. **Apply.** With `--apply`, it makes those changes in Linear.
@@ -130,9 +133,9 @@ The documentation is on the website, at https://oussamabatouche.com/ferryGL/. It
 | Page | What's in it |
 |---|---|
 | [Getting started](https://oussamabatouche.com/ferryGL/docs/getting-started.html) | Install, credentials, and a careful first run |
-| [Configuration](https://oussamabatouche.com/ferryGL/docs/configuration.html) | Every setting in `ferrygl.toml` |
+| [Configuration](https://oussamabatouche.com/ferryGL/docs/configuration.html) | Every setting in `ferrygl.toml`, and checks in your editor |
 | [Sync rules](https://oussamabatouche.com/ferryGL/docs/sync-rules.html) | Which items are synced, how they map to Linear issues, and how statuses move |
-| [Commands](https://oussamabatouche.com/ferryGL/docs/commands.html) | `check` and `sync`, reading the plan, exit statuses, schedules, troubleshooting |
+| [Commands](https://oussamabatouche.com/ferryGL/docs/commands.html) | `check` and `sync`, reading the plan, exit statuses, schedules, VS Code, troubleshooting |
 | [Data and privacy](https://oussamabatouche.com/ferryGL/docs/data-and-privacy.html) | What ferryGL reads, what it writes to Linear, and what it keeps |
 | [Architecture](https://oussamabatouche.com/ferryGL/docs/architecture.html) | How a run works inside, request costs, retries and limits |
 

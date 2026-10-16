@@ -25,6 +25,16 @@ authors of its first 100 commits. It then drops the pull requests without a comm
 ferryGL reads descriptions to find the issues a pull request refers to, even when it doesn't
 copy them.
 
+## What it reads from Linear
+
+- Your user ID and name, and each route's team, workflow states, project and label.
+- For each GitHub URL, up to 20 links to it anywhere in the workspace, with the issue each is
+  on: its identifier, title, status, team and assignee. That includes teammates' issues, which
+  ferryGL never changes.
+- When an item has no Linear issue of yours yet, your issues in the route's team, open or
+  closed, with their identifier, title, status, description and link URLs. ferryGL uses them
+  only to find one to [adopt](sync-rules.md#linear-issues-you-made-by-hand).
+
 ## What it writes to Linear
 
 For each Linear issue it creates:
@@ -52,15 +62,16 @@ nothing else: no titles, descriptions or names. ferryGL never edits or deletes i
 
 ### Link metadata
 
-ferryGL keeps its state in the metadata of each GitHub link, under keys that start with
-`ferrygl_`:
+ferryGL keeps its state in the metadata of the GitHub link on each Linear issue it manages,
+under keys that start with `ferrygl_`. The link of a pull request that rides with an issue
+gets only `ferrygl_v`, `ferrygl_kind` and `ferrygl_linked_to`.
 
 | Key | Value |
 |---|---|
 | `ferrygl_v` | The format version, currently `1` |
 | `ferrygl_kind` | `issue`, `pr` (one you opened) or `involved` (someone else's) |
 | `ferrygl_state` | The GitHub state ferryGL last acted on, such as `issue:open:pr_open` or `pr:merged` |
-| `ferrygl_synced_at` | When that state was recorded, as an ISO 8601 timestamp in UTC |
+| `ferrygl_synced_at` | When the run that recorded that state started, as an ISO 8601 timestamp in UTC |
 | `ferrygl_linked_to` | On the link of a pull request that rides with an issue: that issue, such as `acme/api#252` |
 
 When ferryGL updates a link, it replaces only its own keys and keeps any others.
@@ -97,3 +108,5 @@ configure.
 
 Nothing. ferryGL has no database, cache or log file of its own: everything it needs to
 remember is in the Linear links. Its output goes to the terminal, or wherever you redirect it.
+The output names GitHub items and the titles of the Linear issues it would create, so a log
+file you keep, as in the [cron example](commands.md#cron), holds them too.

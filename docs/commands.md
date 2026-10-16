@@ -117,6 +117,9 @@ cron doesn't load your shell's environment, and starts with a short `PATH`:
   it, `gh`.
 - Put the Linear key in `[linear] api_key_file` rather than `LINEAR_API_KEY`.
 - Use `github_user` on routes, or a GitHub CLI login, rather than `GH_TOKEN`.
+- Try the schedule once without `--apply`, and read the log. If it shows
+  `` `gh auth token` failed ``, cron can't reach the system keyring where the GitHub CLI keeps
+  your token. `gh auth login --insecure-storage` keeps it in the CLI's config file instead.
 
 ### GitHub Actions
 
@@ -191,7 +194,8 @@ To get completion and checks while you edit `ferrygl.toml`, see
 | `project '…' not found for team ENG` | Check the project name, and that the team has access to the project |
 | `label '…' not found in team ENG or the workspace` | Create the label in Linear, or remove `label` |
 | `` `gh auth token` failed for account alice `` | Run `gh auth login` for that account, or fix `github_user` |
-| `no GitHub token: set GH_TOKEN, or install the GitHub CLI …` | Set `GH_TOKEN`, or install the GitHub CLI and run `gh auth login` |
+| `` `gh auth token` failed for the active account `` | Run `gh auth login`, or set `GH_TOKEN` |
+| `no GitHub token: set GH_TOKEN, or install the GitHub CLI …` | ferryGL couldn't run `gh`. Install the GitHub CLI and run `gh auth login`; under cron, add the folder `command -v gh` shows to `PATH`. Routes without `github_user` can use `GH_TOKEN` instead |
 | `GitHub rejected the token (HTTP 401)` | The token expired or was revoked. `gh auth status` shows which |
 | `acme/web: not found with this token` | The token can't see the repository: wrong account, missing fine-grained access, or the organization hasn't approved the token |
 | `several of your Linear issues mention it (ENG-3, ENG-8)` | Add the GitHub link to the right Linear issue by hand, then run again |

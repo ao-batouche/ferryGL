@@ -27,9 +27,10 @@ Don't break these without an explicit decision from the project owner.
    Linear issue's status on its own.
 5. **Reruns are idempotent.** Existing Linear issues are found by their GitHub links
    (`attachmentsForURL`), so a rerun never duplicates. Only idempotent requests are retried
-   after network errors or 5xx responses; `issueCreate` and `commentCreate` are not.
-6. **The planner is pure.** `src/ferrygl/plan.py` does no I/O. All reads happen before
-   planning, and all writes happen after it, in `src/ferrygl/sync.py`.
+   after network errors, timeouts or HTTP 502, 503 or 504; `issueCreate` and `commentCreate`
+   are not.
+6. **The planner is pure.** `src/ferrygl/plan.py` does no I/O. For each route, all reads
+   happen before planning, and all writes happen after it, in `src/ferrygl/sync.py`.
 7. **Copy as little as possible.** By default only titles, numbers, repositories, URLs, states
    and the user's role reach Linear. Descriptions are copied only when `[copy] description`
    is on. Never copy comments or other people's names. ferryGL's own comments
@@ -47,7 +48,8 @@ Users' Linear workspaces keep what ferryGL writes, so treat these as compatibili
   - `ferrygl_v`: format version, currently `1`
   - `ferrygl_kind`: `issue`, `pr` (one you opened) or `involved` (someone else's)
   - `ferrygl_state`: the GitHub state key ferryGL last acted on
-  - `ferrygl_synced_at`: ISO timestamp of that state
+  - `ferrygl_synced_at`: when the run that recorded that state started, as an ISO timestamp
+    in UTC
   - `ferrygl_linked_to`: on links of pull requests that ride with an issue, such as
     `owner/repo#12`
 
@@ -65,14 +67,16 @@ Users' Linear workspaces keep what ferryGL writes, so treat these as compatibili
   error or warning, for at least one release. Describe each key in `site/ferrygl.schema.json`
   too; `tests/test_schema.py` fails until it matches. Users point their editors at that file's
   URL, https://oussamabatouche.com/ferryGL/ferrygl.schema.json, so don't move it.
-- **CLI:** commands `check` and `sync [--apply]`, `--config`, `FERRYGL_CONFIG`,
-  `LINEAR_API_KEY`, and exit statuses 0 (ok), 1 (a route or write failed) and 2 (setup or
-  config error).
+- **CLI:** commands `check` and `sync [--apply]`, `--config`, `FERRYGL_CONFIG`, the default
+  path `$XDG_CONFIG_HOME/ferrygl/ferrygl.toml` (else `~/.config/ferrygl/ferrygl.toml`),
+  `LINEAR_API_KEY`, `GH_TOKEN` and `GITHUB_TOKEN`, and exit statuses 0 (ok), 1 (a route or
+  write failed), 2 (setup or config error) and 130 (interrupted).
 
 ## Layout
 
 | Path | Responsibility |
 |---|---|
+| `src/ferrygl/cli.py` | The `ferrygl` command: arguments, the Linear API key, exit statuses |
 | `src/ferrygl/config.py` | Parse and validate `ferrygl.toml` into frozen dataclasses |
 | `src/ferrygl/github.py` | Resolve tokens, run one GitHub search per role, scan commit authors, parse items |
 | `src/ferrygl/linear.py` | Linear GraphQL reads and writes with a personal API key |
@@ -81,9 +85,11 @@ Users' Linear workspaces keep what ferryGL writes, so treat these as compatibili
 | `src/ferrygl/model.py` | Shared types: `Kind`, `Role`, `GitHubItem`, `LinearIssue`, `Attachment`, `Change` |
 | `src/ferrygl/_http.py` | JSON POST with retries for both clients |
 | `tests/builders.py` | Builders for synthetic items, Linear issues and links |
+| `tests/test_schema.py` | Checks that `site/ferrygl.schema.json` matches `config.py` |
 | `docs/` | User documentation: setup, configuration, sync rules, commands, data, architecture |
 | `site/` | The website: a hand-written home page, and `build.py`, which renders `docs/` into pages |
 | `site/ferrygl.schema.json` | JSON Schema for `ferrygl.toml`, published on the website for editors |
+| `site/_runflow.html`, `site/main.js` | The interactive run diagram: its JSON model, and the script that draws it |
 
 ## Development
 
@@ -189,9 +195,10 @@ version rather than trying to replace it.
 
 ## Current state
 
-- `check` and `sync` are implemented and tested with fixtures. GitHub reads have been
-  exercised against a real repository. Reads and writes against a real Linear workspace
-  haven't been exercised yet, so do a read-only preview before the first release.
+- `check` and `sync` are implemented, tested with fixtures, and released on PyPI. GitHub reads
+  have been exercised against a real repository. Reads and writes against a real Linear
+  workspace haven't been exercised yet, so ask the owner for a read-only preview against
+  their workspace before a release that changes Linear queries.
 - Planned: a scheduled GitHub Actions template.
 - Finding pull requests with the user's commits scans every pull request in scope, because
   GitHub search has no commit-author qualifier for pull requests. Keep that scan bounded by

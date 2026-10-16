@@ -67,18 +67,23 @@ own.
 Some cases are handled specially:
 
 - If the pull request already had its own Linear issue before it referred to the issue, it
-  stays there.
-- If the issue has no Linear issue yet but its pull request does, the issue joins the pull
-  request's Linear issue.
+  stays there. It still counts toward the issue's status, so both Linear issues move.
+- If the issue has no Linear issue of yours yet but its pull request does, the issue joins the
+  pull request's Linear issue, as long as the pull request refers to no other synced issue.
+  Otherwise each issue gets a new Linear issue, and the pull request keeps its own.
 - If the reference is later edited out of the pull request, its link stays on the issue's
   Linear issue, and it keeps counting toward that issue's status.
+- If the issue leaves your scope while the pull request is still in it, the pull request
+  takes over the issue's Linear issue, as if it were its own. On the next run it only closes
+  the Linear issue, if the pull request was merged or closed; after that, the pull request's
+  own changes move its status.
 
 ## Status rules
 
 ferryGL sets a status when it creates a Linear issue, and when the GitHub state changes
 afterwards. In each table, the first row that matches wins.
 
-**Issues**, with the pull requests that ride with them:
+**Issues**, with the pull requests you opened that refer to them:
 
 | On GitHub | Linear status |
 |---|---|
@@ -108,6 +113,10 @@ afterwards. In each table, the first row that matches wins.
 | You've reviewed it, and no new request is pending | In Review |
 | Draft (assigned to you, or with your commits) | In Progress |
 | Open (assigned to you, or with your commits) | In Review |
+
+The review rows need their [roles](configuration.md#roles) on. With `review_requests = false`,
+a new request doesn't move a pull request back to Todo. With `prs_reviewed = false`, a pull
+request you reviewed follows the Draft and Open rows.
 
 ## Your edits win
 
@@ -141,7 +150,10 @@ issues in the route's team (assigned to you, open or closed) for one that mentio
 
 - its GitHub URL is in the description or in a link, or
 - its title ends with `#<number>`, when the route has a single repository (and no `owner/*`)
-  and the description mentions no other GitHub item.
+  and the description has no link to another GitHub issue or pull request.
+
+For an issue, a Linear issue that mentions one of your pull requests that refers to it counts
+too.
 
 An issue never matches if it's already linked to a different GitHub item, since it's about
 that item, or if it's already the home of another item.
@@ -151,8 +163,8 @@ Two more rules cover pull requests you opened:
 - If nothing mentions the pull request, a Linear issue that mentions an issue it refers to
   (in the same repository) counts, unless that Linear issue is already linked to a pull
   request.
-- If an issue has no Linear issue but its pull request already has one, the issue joins that
-  Linear issue.
+- If an issue has no Linear issue of yours but its pull request already has one, the issue
+  joins that Linear issue, as long as the pull request refers to no other synced issue.
 
 When exactly one Linear issue matches, ferryGL links the item to it (`adopt` in the plan)
 instead of creating a new one. Adopting follows the first-sync rule: the status moves only if
@@ -169,4 +181,6 @@ link to the right one by hand, and the next run picks it up.
 - Change a title or description after creating the issue.
 - Reopen a Linear issue on its first sync.
 - Clean up after an item leaves your scope. If you're unassigned, a review request is
-  withdrawn, or `since` moves past an item, its Linear issue stays as it is.
+  withdrawn, or `since` moves past an item, its Linear issue stays as it is. The one
+  exception is an issue whose [pull request rides with it](#pull-requests-that-ride-with-an-issue)
+  and stays in scope.
