@@ -58,7 +58,9 @@ def pr(
     )
 
 
-def review(number: int, state: str = "OPEN", reviewed: bool = False) -> GitHubItem:
+def review(
+    number: int, state: str = "OPEN", reviewed: bool = False, requested: bool | None = None
+) -> GitHubItem:
     return GitHubItem(
         kind=Kind.REVIEW,
         repo=REPO,
@@ -67,6 +69,7 @@ def review(number: int, state: str = "OPEN", reviewed: bool = False) -> GitHubIt
         url=url(Kind.PR, number),
         state=state,
         reviewed=reviewed,
+        requested=(not reviewed) if requested is None else requested,
     )
 
 
@@ -99,7 +102,7 @@ def attachment(
 ) -> Attachment:
     meta = dict(metadata or {})
     if recorded is not None:
-        meta["ferrygl"] = {"v": 1, "kind": item.kind.value, "state": recorded}
+        meta.update(ferrygl_v=1, ferrygl_kind=item.kind.value, ferrygl_state=recorded)
     return Attachment(
         id=f"att-{on.identifier}-{item.number}",
         url=item.url,

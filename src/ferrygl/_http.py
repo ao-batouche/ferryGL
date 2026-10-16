@@ -27,33 +27,38 @@ def post_json(
     *,
     attempts: int = 3,
     sleep: Callable[[float], None] = time.sleep,
+    idempotent: bool = True,
 ) -> dict[str, Any]:
     """POST ``payload`` and return the decoded JSON object.
 
-    Rate-limited and temporarily unavailable responses are retried, honoring
-    ``Retry-After``. An error status whose body carries GraphQL ``errors`` is returned
-    rather than raised, so the caller can report the server's own message.
+    Rate-limited responses are retried, honoring ``Retry-After``. When ``idempotent``,
+    network errors and temporarily unavailable responses are retried too; otherwise they
+    are raised, because the server may have acted on the request already. An error status
+    whose body carries GraphQL ``errors`` is returned rather than raised, so the caller can
+    report the server's own message.
     """
     for attempt in range(1, attempts + 1):
         try:
             response = client.post(url, json=payload, headers=headers)
         except httpx.TransportError as exc:
-            if attempt == attempts:
+            if attempt == attempts or not idempotent:
                 raise HttpError(f"could not reach {url}: {exc}") from exc
             sleep(float(2**attempt))
             continue
-        if attempt < attempts and _should_retry(response):
+        if attempt < attempts and _should_retry(response, idempotent):
             sleep(_retry_after(response, default=float(2**attempt)))
             continue
         return _decode(url, response)
     raise ValueError("attempts must be at least 1")
 
 
-def _should_retry(response: httpx.Response) -> bool:
-    if response.status_code in RETRY_STATUSES:
+def _should_retry(response: httpx.Response, idempotent: bool) -> bool:
+    if response.status_code == 429:
         return True
     # GitHub reports secondary rate limits as 403 with Retry-After.
-    return response.status_code == 403 and "retry-after" in response.headers
+    if response.status_code == 403 and "retry-after" in response.headers:
+        return True
+    return idempotent and response.status_code in RETRY_STATUSES
 
 
 def _retry_after(response: httpx.Response, default: float) -> float:

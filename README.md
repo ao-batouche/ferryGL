@@ -34,9 +34,10 @@ makes sure each item has exactly one Linear issue, assigned to you, with the rig
 | Pull requests you reviewed | `is:pr reviewed-by:<you> -author:<you>` | `[PR] {title} - #{number}` |
 | Pull requests waiting for your review | `is:pr user-review-requested:<you>` | `[PR] {title} - #{number}` |
 
-A pull request that refers to a synced issue, through a closing keyword such as
-`Fixes #252` or a plain `#252` in its title or description, is linked to that issue's Linear
-issue instead of getting its own.
+A pull request you opened that refers to an issue assigned to you, through a closing keyword
+such as `Fixes #252` or a plain `#252` in its title or description, is linked to that
+issue's Linear issue instead of getting its own. Pull requests you review always get their
+own Linear issue.
 
 For example, you're assigned `acme/api#252` and open `acme/api#335`, whose description says
 "Part of #252":
@@ -65,8 +66,8 @@ Linear state names are configurable. These are the defaults:
 | Your pull request is open | In Review |
 | Pull request merged | Done |
 | Pull request closed without merging | Canceled |
-| Review requested, not yet reviewed | Todo |
-| You reviewed, pull request still open | In Review |
+| Your review is requested, including again after you reviewed | Todo |
+| You reviewed, no new request, pull request still open | In Review |
 
 **Your edits win.** ferryGL records the GitHub state it last acted on in the link's metadata
 on the Linear issue, and changes the Linear status only when that GitHub state changes. If
@@ -81,10 +82,16 @@ Before creating a Linear issue, ferryGL looks for one of yours in the route's te
 already mentions the item:
 
 - its GitHub URL is in the description or links, or
-- its title ends with `#<number>`, when the route has a single repository.
+- its title ends with `#<number>`, when the route has a single repository and the
+  description mentions no other GitHub item.
 
-For a pull request with no such mention, a Linear issue that mentions an issue the pull
-request refers to also counts.
+A Linear issue already linked to a different GitHub item is about that item, and never
+matches. Two more rules cover hand-made issues for pull requests:
+
+- If nothing mentions a pull request you opened, a Linear issue that mentions an issue it
+  refers to counts, unless that Linear issue is linked to a pull request.
+- If an issue assigned to you has no Linear issue but its pull request already has one, the
+  issue joins that Linear issue.
 
 When exactly one issue matches, ferryGL links it instead of creating a new one (`adopt` in
 the plan). It doesn't change that issue's status unless GitHub says the work is done or
@@ -142,7 +149,7 @@ project = "Acme engagement"   # optional
 github_user = "alice-acme"    # optional: read GitHub as this gh account
 
 [[route]]
-repos = ["upstream-org/*"]    # every repository of an owner
+repos = ["upstream-org/*"]    # every repository of a user or organization
 team = "ENG"
 project = "Upstream contributions"
 github_user = "alice"
@@ -218,14 +225,18 @@ plan).
 - If a route's repositories can't be read, ferryGL reports it, skips that route, continues
   with the others, and exits with status 1.
 - If a write fails, ferryGL reports it and continues. A run that fails halfway is safe to
-  repeat: ferryGL finds Linear issues by their GitHub links, or adopts the issue it just
-  created, so a rerun doesn't create duplicates.
+  repeat: ferryGL finds Linear issues by their GitHub links, so a rerun doesn't create
+  duplicates.
+- Creating a Linear issue is never retried after a network error, because Linear may have
+  created it anyway. If it did, the next sync adopts it through the GitHub URL in its
+  description.
 
 ## How it works
 
 - **No database.** Every Linear issue ferryGL manages has a link with the GitHub URL.
   ferryGL finds it with Linear's `attachmentsForURL` query, and keeps the last GitHub state
-  it acted on in the link's `metadata` under the `ferrygl` key. Linear holds all the state.
+  it acted on in the link's `metadata`, as flat `ferrygl_*` keys such as `ferrygl_state`.
+  Linear holds all the state.
 - **Few requests.** GitHub reads use the GraphQL search API: up to four searches per route,
   plus one request per 50 results.
 - **Testable core.** Planning (`ferrygl.plan`) is a pure function from GitHub items, existing

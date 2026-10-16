@@ -49,7 +49,7 @@ def summary(changes: list[Change]) -> list[tuple]:
 
 
 def recorded_state(link) -> str:
-    return link.metadata["ferrygl"]["state"]
+    return link.metadata["ferrygl_state"]
 
 
 # New items
@@ -64,7 +64,8 @@ def test_new_assigned_issue_is_created_as_todo():
     [link] = change.links
     assert link.url == "https://github.com/acme/api/issues/12"
     assert recorded_state(link) == "issue:open"
-    assert link.metadata["ferrygl"]["synced_at"] == NOW
+    assert link.metadata["ferrygl_synced_at"] == NOW
+    assert all(isinstance(v, str | int) for v in link.metadata.values())
 
 
 def test_issue_and_the_pull_request_that_refers_to_it_share_one_linear_issue():
@@ -75,7 +76,8 @@ def test_issue_and_the_pull_request_that_refers_to_it_share_one_linear_issue():
         "https://github.com/acme/api/issues/12",
         "https://github.com/acme/api/pull/15",
     ]
-    assert change.links[1].metadata["ferrygl"]["linked_to"] == "acme/api#12"
+    assert change.links[1].metadata["ferrygl_linked_to"] == "acme/api#12"
+    assert "ferrygl_state" not in change.links[1].metadata
 
 
 def test_pull_request_without_a_synced_issue_gets_its_own_linear_issue():
@@ -96,6 +98,15 @@ def test_review_request_then_review():
     assert requested.title == "[PR] PR 20 - #20"
     assert requested.status_to == "Todo"
     assert reviewed.status_to == "In Review"
+
+
+def test_a_new_review_request_after_your_review_moves_it_back_to_todo():
+    home = linear_issue("ENG-1", state="In Review")
+    item = review(20, reviewed=True, requested=True)
+
+    changes = run([item], [attachment(item, home, recorded="review:reviewed")])
+
+    assert summary(changes) == [("update", "acme/api#20", "ENG-1", "Todo")]
 
 
 def test_title_templates_come_from_config():
@@ -174,9 +185,11 @@ def test_other_metadata_on_the_link_is_kept():
     home = linear_issue("ENG-1", state="In Review")
     item = pr(15, state="MERGED")
 
-    [change] = run([item], [attachment(item, home, recorded="pr:open", metadata={"x": 1})])
+    old = {"x": 1, "ferrygl_stale": "gone"}
+    [change] = run([item], [attachment(item, home, recorded="pr:open", metadata=old)])
 
     assert change.links[0].metadata["x"] == 1
+    assert "ferrygl_stale" not in change.links[0].metadata
     assert recorded_state(change.links[0]) == "pr:merged"
 
 
@@ -309,14 +322,96 @@ def test_an_issue_already_home_to_another_item_is_not_adopted():
     assert summary(changes) == [("create", "acme/api#15", None, "In Review")]
 
 
-def test_pull_request_with_its_own_linear_issue_stays_there():
-    own = linear_issue("ENG-9", state="In Review")
+def test_adoption_skips_an_issue_about_another_repository():
+    # Your Linear issue for upstream/lib#15 ends in "#15" too.
+    theirs = linear_issue(
+        "ENG-50",
+        state="In Review",
+        title="Upstream fix - #15",
+        description="Pull request: https://github.com/upstream/lib/pull/15",
+        urls=("https://github.com/upstream/lib/pull/15",),
+    )
+    mentions_only = linear_issue(
+        "ENG-51", title="Upstream fix - #15", description="https://github.com/upstream/lib/pull/15"
+    )
+
+    changes = run([pr(15, state="MERGED")], candidates=[theirs, mentions_only])
+
+    assert summary(changes) == [("create", "acme/api#15", None, "Done")]
+
+
+def test_pull_request_fallback_ignores_numbers_of_known_pull_requests():
+    # #20 is a pull request you reviewed, not an issue.
+    tracks_review = linear_issue("ENG-3", title="Review the checkpoints page - #20")
+
+    changes = run([pr(30, refs=(20,)), review(20, reviewed=True)], candidates=[tracks_review])
+
+    assert summary(changes) == [
+        ("create", "acme/api#30", None, "In Review"),
+        ("adopt", "acme/api#20", "ENG-3", None),
+    ]
+
+
+def test_pull_request_fallback_skips_a_linear_issue_linked_to_a_pull_request():
+    pr_item = linear_issue(
+        "ENG-3", title="Old PR #88", urls=("https://github.com/acme/api/pull/88",)
+    )
+    issue_item = linear_issue(
+        "ENG-4", title="Issue #88", urls=("https://github.com/acme/api/issues/88",)
+    )
+
+    assert summary(run([pr(89, refs=(88,))], candidates=[pr_item])) == [
+        ("create", "acme/api#89", None, "In Review")
+    ]
+    assert summary(run([pr(89, refs=(88,))], candidates=[issue_item])) == [
+        ("adopt", "acme/api#89", "ENG-4", None)
+    ]
+
+
+def test_issue_joins_the_linear_issue_its_pull_request_already_has():
+    own = linear_issue("ENG-3", state="In Review")
     items = [issue(12), pr(15, refs=(12,))]
 
-    changes = run(items, [attachment(items[1], own, recorded="pr:open")])
+    [change] = run(items, [attachment(items[1], own, recorded="pr:open")])
 
-    assert summary(changes) == [("create", "acme/api#12", None, "In Review")]
-    assert [link.url for link in changes[0].links] == ["https://github.com/acme/api/issues/12"]
+    assert summary([change]) == [("adopt", "acme/api#12", "ENG-3", None)]
+    assert [link.url for link in change.links] == ["https://github.com/acme/api/issues/12"]
+
+
+def test_a_rider_link_that_becomes_a_home_counts_as_a_first_sync():
+    # You canceled ENG-7 by hand; #12 then left your scope while its PR stays open.
+    home = linear_issue("ENG-7", state="Canceled")
+    item = pr(15)
+    rider_meta = {"ferrygl_v": 1, "ferrygl_kind": "pr", "ferrygl_linked_to": "acme/api#12"}
+
+    [change] = run([item], [attachment(item, home, metadata=rider_meta)])
+
+    assert summary([change]) == [("record", "acme/api#15", "ENG-7", None)]
+
+
+def test_pull_request_whose_link_sits_on_an_issue_home_still_rides_with_it():
+    # The "#12" reference was edited out of PR 15, but its link stays on ENG-7.
+    home = linear_issue("ENG-7", state="In Review")
+    items = [issue(12), pr(15)]
+    rider_meta = {"ferrygl_v": 1, "ferrygl_kind": "pr", "ferrygl_linked_to": "acme/api#12"}
+    links = [
+        attachment(items[0], home, recorded="issue:open:pr_open"),
+        attachment(items[1], home, metadata=rider_meta),
+    ]
+
+    assert run(items, links) == []
+
+
+def test_pull_request_with_its_own_linear_issue_stays_there():
+    issue_home = linear_issue("ENG-1", state="In Review")
+    pr_home = linear_issue("ENG-9", state="In Review")
+    items = [issue(12), pr(15, refs=(12,))]
+    links = [
+        attachment(items[0], issue_home, recorded="issue:open:pr_open"),
+        attachment(items[1], pr_home, recorded="pr:open"),
+    ]
+
+    assert run(items, links) == []
 
 
 # GitHub state derivation

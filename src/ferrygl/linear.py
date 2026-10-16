@@ -49,10 +49,19 @@ class LinearClient:
         self._headers = {"Authorization": api_key, "User-Agent": "ferryGL"}
         self._sleep = sleep
 
-    def graphql(self, query: str, variables: dict[str, Any] | None = None) -> dict[str, Any]:
+    def graphql(
+        self, query: str, variables: dict[str, Any] | None = None, *, idempotent: bool = True
+    ) -> dict[str, Any]:
         payload = {"query": query, "variables": variables or {}}
         try:
-            body = post_json(self._http, LINEAR_GRAPHQL, payload, self._headers, sleep=self._sleep)
+            body = post_json(
+                self._http,
+                LINEAR_GRAPHQL,
+                payload,
+                self._headers,
+                sleep=self._sleep,
+                idempotent=idempotent,
+            )
         except HttpError as exc:
             raise LinearError(str(exc)) from None
         if errors := body.get("errors"):
@@ -178,7 +187,9 @@ class LinearClient:
             issue_input["projectId"] = project_id
         if labels := list(label_ids):
             issue_input["labelIds"] = labels
-        payload = self.graphql(query, {"input": issue_input})["issueCreate"]
+        # Not retried after a network error: Linear may have created the issue already. If
+        # it did, the next sync adopts it through the GitHub URL in its description.
+        payload = self.graphql(query, {"input": issue_input}, idempotent=False)["issueCreate"]
         if not payload["success"] or not payload.get("issue"):
             raise LinearError(f"Linear didn't create the issue {title!r}")
         return _issue(payload["issue"])

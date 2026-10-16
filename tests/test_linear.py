@@ -126,6 +126,27 @@ def test_find_label_prefers_the_team_label_over_the_workspace_label():
     assert client.find_label("ferryGL", "t2") == "workspace"
 
 
+def test_reads_are_retried_but_issue_creation_is_not():
+    calls = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(json.loads(request.content)["query"])
+        if len(calls) == 1:
+            return httpx.Response(503, text="unavailable")
+        return httpx.Response(200, json={"data": {"viewer": {"id": "u1", "name": "A"}}})
+
+    client = LinearClient(
+        "k", http=httpx.Client(transport=httpx.MockTransport(handler)), sleep=lambda s: None
+    )
+    assert client.viewer() == ("u1", "A")
+    assert len(calls) == 2
+
+    calls.clear()
+    with pytest.raises(LinearError, match="HTTP 503"):
+        client.create_issue(team_id="t", title="A", description="", state_id="s", assignee_id="u")
+    assert len(calls) == 1
+
+
 def test_unsuccessful_mutations_raise():
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json={"data": {"issueUpdate": {"success": False}}})

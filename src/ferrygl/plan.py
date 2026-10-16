@@ -4,28 +4,38 @@ Each GitHub item gets one "home": the Linear issue, assigned to you, that has a 
 the item's URL. Issues assigned to you carry the pull requests that refer to them, so an
 issue and its fix share one Linear issue.
 
-ferryGL stores the GitHub state it last acted on in the link's metadata, under the
-``ferrygl`` key, and moves the Linear status only when that GitHub state changes. A status
-you set by hand is left alone until something happens on GitHub.
+ferryGL stores the GitHub state it last acted on in the link's metadata, as flat
+``ferrygl_*`` keys, and moves the Linear status only when that GitHub state changes. A
+status you set by hand is left alone until something happens on GitHub.
 """
 
 from __future__ import annotations
 
 import re
 from collections import defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
 from ferrygl.config import Config, Route
-from ferrygl.model import Action, Attachment, Change, GitHubItem, Kind, LinearIssue, Link
+from ferrygl.model import (
+    Action,
+    Attachment,
+    Change,
+    GitHubItem,
+    Kind,
+    LinearIssue,
+    Link,
+    item_key,
+)
 
-META_KEY = "ferrygl"
+META_PREFIX = "ferrygl_"
 META_VERSION = 1
 TERMINAL = frozenset({"done", "canceled"})
 LINEAR_CLOSED_TYPES = frozenset({"completed", "canceled", "duplicate"})
 
 _TITLE_NUMBER = re.compile(r"#(\d+)\s*$")
+_GITHUB_URL = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)/(?:issues|pull)/(\d+)")
 
 
 @dataclass(frozen=True)
@@ -61,9 +71,10 @@ def github_state(item: GitHubItem, linked_prs: Sequence[GitHubItem] = ()) -> Git
         if item.is_draft:
             return GitHubState("pr:draft", "in_progress", "in_progress")
         return GitHubState("pr:open", "in_review", "in_review")
-    if item.reviewed:
-        return GitHubState("review:reviewed", "in_review", "in_review")
-    return GitHubState("review:requested", "todo", "todo")
+    # A request after your review (such as a re-request) means it's your turn again.
+    if item.requested:
+        return GitHubState("review:requested", "todo", "todo")
+    return GitHubState("review:reviewed", "in_review", "in_review")
 
 
 @dataclass(frozen=True)
@@ -89,6 +100,7 @@ class _Planner:
         self.issues = [i for i in inp.items if i.kind is Kind.ISSUE]
         self.prs = [i for i in inp.items if i.kind is Kind.PR]
         self.reviews = [i for i in inp.items if i.kind is Kind.REVIEW]
+        self.known_prs = {i.key for i in inp.items if i.kind is not Kind.ISSUE}
         issue_keys = {issue.key for issue in self.issues}
         # Pull request key -> keys of synced issues it refers to.
         self.refs = {
@@ -102,24 +114,46 @@ class _Planner:
         self.claimed = {home.issue.id for item in inp.items if (home := self.home(item.url))}
 
     def run(self) -> list[Change]:
-        issue_homes = {issue.key: self.home(issue.url) for issue in self.issues}
+        issue_homes = {
+            issue.key: home.issue if (home := self.home(issue.url)) else None
+            for issue in self.issues
+        }
+        # An issue without a Linear issue joins the one its pull request already has.
+        joins: dict[str, LinearIssue] = {}
+        for pr in self.prs:
+            targets = self.refs[pr.key]
+            own = self.home(pr.url)
+            if own is not None and len(targets) == 1 and issue_homes[targets[0]] is None:
+                joins.setdefault(targets[0], own.issue)
+
+        # Linear issue ID -> the synced issue whose home it is.
+        owners = {
+            linear.id: key for key, linear in {**joins, **issue_homes}.items() if linear is not None
+        }
         riders: dict[str, list[GitHubItem]] = defaultdict(list)
         solo_prs = []
         for pr in self.prs:
             targets = self.refs[pr.key]
             own = self.home(pr.url)
-            target_homes = {issue_homes[k].issue.id for k in targets if issue_homes.get(k)}
+            target_ids = {t.id for k in targets if (t := issue_homes[k] or joins.get(k))}
             # A pull request rides with its issue unless it already has a Linear issue of
             # its own elsewhere.
-            if targets and (own is None or own.issue.id in target_homes):
+            if targets and (own is None or own.issue.id in target_ids):
                 for key in targets:
                     riders[key].append(pr)
+            elif own is not None and own.issue.id in owners:
+                # Its link sits on an issue's Linear issue (say, the reference was edited
+                # out): keep one source for that Linear issue's status.
+                key = owners[own.issue.id]
+                riders[key].append(pr)
+                self.linked[key].append(pr)
             else:
                 solo_prs.append(pr)
 
         changes: list[Change] = []
         for issue in self.issues:
-            changes += self.unit(issue, self.linked[issue.key], riders[issue.key])
+            linked, rides, join = self.linked[issue.key], riders[issue.key], joins.get(issue.key)
+            changes += self.unit(issue, linked, rides, join)
         for item in [*solo_prs, *self.reviews]:
             changes += self.unit(item, (), ())
         return changes
@@ -131,13 +165,24 @@ class _Planner:
                 return attachment
         return None
 
+    def attached(self, url: str, issue: LinearIssue) -> bool:
+        return url in issue.attachment_urls or any(
+            a.issue.id == issue.id for a in self.inp.attachments.get(url, ())
+        )
+
     def unit(
-        self, item: GitHubItem, linked_prs: Sequence[GitHubItem], riders: Sequence[GitHubItem]
+        self,
+        item: GitHubItem,
+        linked_prs: Sequence[GitHubItem],
+        riders: Sequence[GitHubItem],
+        join: LinearIssue | None = None,
     ) -> list[Change]:
         state = github_state(item, linked_prs)
         home = self.home(item.url)
         if home is not None:
             return self.existing(item, state, home, riders)
+        if join is not None:
+            return [self.adopt(item, state, join, riders)]
         return self.new(item, state, riders)
 
     def existing(
@@ -152,8 +197,8 @@ class _Planner:
         recorded = _recorded(home.metadata)
         if recorded.get("state") != state.key:
             category = state.on_change
-            if not recorded:
-                # First sync of an issue made by hand: only close it if GitHub is done.
+            if "state" not in recorded:
+                # First time ferryGL acts on this link: only close the issue if GitHub is done.
                 category = self.closing_category(state.on_change, issue)
             status_to = self.target(category, issue)
             record = Link(
@@ -174,7 +219,7 @@ class _Planner:
                 )
             )
         for pr in riders:
-            if not any(a.issue.id == issue.id for a in self.inp.attachments.get(pr.url, ())):
+            if not self.attached(pr.url, issue):
                 changes.append(
                     Change(Action.LINK, pr, issue=issue, links=(self.rider_link(pr, item),))
                 )
@@ -188,22 +233,8 @@ class _Planner:
             names = ", ".join(c.identifier for c in matches)
             note = f"several of your Linear issues mention it ({names}); link it to one by hand"
             return [Change(Action.SKIP, item, note=note)]
-
-        links = (self.primary_link(item, state), *(self.rider_link(pr, item) for pr in riders))
         if matches:
-            issue = matches[0]
-            self.claimed.add(issue.id)
-            status_to = self.target(self.closing_category(state.on_create, issue), issue)
-            return [
-                Change(
-                    Action.ADOPT,
-                    item,
-                    issue=issue,
-                    status_from=issue.state_name if status_to else None,
-                    status_to=status_to,
-                    links=tuple(link for link in links if link.url not in issue.attachment_urls),
-                )
-            ]
+            return [self.adopt(item, state, matches[0], riders)]
         return [
             Change(
                 Action.CREATE,
@@ -211,42 +242,79 @@ class _Planner:
                 title=self.title(item),
                 description=self.description(item, riders),
                 status_to=self.names.name(state.on_create),
-                links=links,
+                links=(
+                    self.primary_link(item, state),
+                    *(self.rider_link(pr, item) for pr in riders),
+                ),
             )
         ]
+
+    def adopt(
+        self,
+        item: GitHubItem,
+        state: GitHubState,
+        issue: LinearIssue,
+        riders: Sequence[GitHubItem],
+    ) -> Change:
+        """Link ``item`` to an existing Linear issue that has no link to it yet."""
+        self.claimed.add(issue.id)
+        links = [self.primary_link(item, state)]
+        links += [self.rider_link(pr, item) for pr in riders if not self.attached(pr.url, issue)]
+        status_to = self.target(self.closing_category(state.on_create, issue), issue)
+        return Change(
+            Action.ADOPT,
+            item,
+            issue=issue,
+            status_from=issue.state_name if status_to else None,
+            status_to=status_to,
+            links=tuple(links),
+        )
 
     def candidates_for(self, item: GitHubItem, riders: Sequence[GitHubItem]) -> list[LinearIssue]:
         """Your Linear issues that mention ``item``, or a pull request riding with it.
 
-        A mention is the GitHub URL in the description or links. When the route has a
-        single repository, a title ending in ``#<number>`` also counts. A pull request
-        with nothing mentioning it directly falls back to the issues it refers to, since
-        a Linear issue tracking an issue is the natural home for its fix.
+        A mention is the GitHub URL in the description or links, or, when the route has a
+        single repository, a title ending in ``#<number>``. A pull request that nothing
+        mentions falls back to the issues it refers to, since the Linear issue tracking an
+        issue is the natural home for its fix.
         """
-        direct = self.mentioning(
-            [item.url, *(pr.url for pr in riders)], {item.number, *(pr.number for pr in riders)}
-        )
+        direct = self.mentioning([item, *riders])
         if direct or item.kind is not Kind.PR:
             return direct
-        refs = [r for r in item.references if r.repo.lower() == item.repo.lower()]
-        urls = [
-            f"https://github.com/{item.repo}/{path}/{r.number}"
-            for r in refs
-            for path in ("issues", "pull")
+        refs = [
+            r
+            for r in item.references
+            if r.repo.lower() == item.repo.lower() and r.key not in self.known_prs
         ]
-        return self.mentioning(urls, {r.number for r in refs})
+        return self.mentioning([_ref_item(item.repo, r.number) for r in refs], pr_links=False)
 
-    def mentioning(self, urls: Sequence[str], numbers: set[int]) -> list[LinearIssue]:
+    def mentioning(self, items: Sequence[GitHubItem], pr_links: bool = True) -> list[LinearIssue]:
+        """Unclaimed candidates that mention one of ``items`` and nothing else on GitHub.
+
+        A candidate already linked to a different GitHub item is about that item. With
+        ``pr_links`` false, a candidate linked to any pull request is skipped too.
+        """
+        keys = {i.key for i in items}
+        numbers = {i.number for i in items}
         by_title = self.inp.route.single_repo is not None
         found = []
         for candidate in self.inp.candidates:
             if candidate.id in self.claimed:
                 continue
+            if _github_keys(candidate.attachment_urls) - keys:
+                continue
+            if not pr_links and any("/pull/" in u for u in candidate.attachment_urls):
+                continue
             by_url = any(
-                url in candidate.attachment_urls or _mentions(candidate.description, url)
-                for url in urls
+                i.url in candidate.attachment_urls or _mentions(candidate.description, i.url)
+                for i in items
             )
-            if by_url or (by_title and _title_number(candidate.title) in numbers):
+            by_number = (
+                by_title
+                and _title_number(candidate.title) in numbers
+                and _github_keys([candidate.description]) <= keys
+            )
+            if by_url or by_number:
                 found.append(candidate)
         return found
 
@@ -266,14 +334,10 @@ class _Planner:
     def metadata(
         self, existing: dict[str, Any], item: GitHubItem, state: GitHubState
     ) -> dict[str, Any]:
-        merged = dict(existing or {})
-        merged[META_KEY] = {
-            "v": META_VERSION,
-            "kind": item.kind.value,
-            "state": state.key,
-            "synced_at": self.inp.now,
-        }
-        return merged
+        """``existing`` metadata with ferryGL's keys replaced. Values are strings or numbers,
+        as Linear expects."""
+        kept = {k: v for k, v in (existing or {}).items() if not str(k).startswith(META_PREFIX)}
+        return {**kept, **_meta(item.kind.value, state=state.key, synced_at=self.inp.now)}
 
     def primary_link(self, item: GitHubItem, state: GitHubState) -> Link:
         return Link(
@@ -284,8 +348,12 @@ class _Planner:
         )
 
     def rider_link(self, pr: GitHubItem, issue: GitHubItem) -> Link:
-        meta = {"v": META_VERSION, "kind": pr.kind.value, "linked_to": issue.label}
-        return Link(url=pr.url, title=_link_title(pr), subtitle=pr.repo, metadata={META_KEY: meta})
+        return Link(
+            url=pr.url,
+            title=_link_title(pr),
+            subtitle=pr.repo,
+            metadata=_meta(pr.kind.value, linked_to=issue.label),
+        )
 
     def title(self, item: GitHubItem) -> str:
         template = getattr(self.inp.config.titles, item.kind.value)
@@ -301,9 +369,31 @@ class _Planner:
         return text
 
 
+def _meta(kind: str, **fields: str) -> dict[str, Any]:
+    meta: dict[str, Any] = {f"{META_PREFIX}v": META_VERSION, f"{META_PREFIX}kind": kind}
+    meta.update({f"{META_PREFIX}{name}": value for name, value in fields.items()})
+    return meta
+
+
 def _recorded(metadata: Any) -> dict[str, Any]:
-    value = metadata.get(META_KEY) if isinstance(metadata, dict) else None
-    return value if isinstance(value, dict) else {}
+    """ferryGL's own metadata on a link, without the prefix."""
+    if not isinstance(metadata, dict):
+        return {}
+    return {
+        key[len(META_PREFIX) :]: value
+        for key, value in metadata.items()
+        if isinstance(key, str) and key.startswith(META_PREFIX)
+    }
+
+
+def _ref_item(repo: str, number: int) -> GitHubItem:
+    """A referenced issue, known only by its number."""
+    url = f"https://github.com/{repo}/issues/{number}"
+    return GitHubItem(Kind.ISSUE, repo, number, title="", url=url, state="OPEN")
+
+
+def _github_keys(texts: Iterable[str]) -> set[str]:
+    return {item_key(m[1], int(m[2])) for text in texts for m in _GITHUB_URL.finditer(text)}
 
 
 def _mentions(text: str, url: str) -> bool:

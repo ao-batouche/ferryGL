@@ -82,7 +82,7 @@ def test_search_queries_cover_each_role_with_scope_and_since():
 
     queries = dict(search_queries(route, "alice", sync))
 
-    scope = "repo:acme/api org:other updated:>=2026-09-01"
+    scope = "repo:acme/api user:other updated:>=2026-09-01"
     assert queries == {
         ASSIGNED: f"is:issue assignee:alice {scope}",
         AUTHORED: f"is:pr author:alice {scope}",
@@ -109,7 +109,9 @@ def test_parse_issue_and_pull_request_nodes():
     assert (issue.kind, issue.state, issue.state_reason) == (Kind.ISSUE, "CLOSED", "COMPLETED")
     assert (pr.kind, pr.is_draft) == (Kind.PR, True)
     assert [ref.key for ref in pr.references] == ["acme/api#9", "acme/api#12"]
-    assert (review.kind, review.reviewed, review.references) == (Kind.REVIEW, True, ())
+    assert (review.kind, review.reviewed, review.requested) == (Kind.REVIEW, True, False)
+    assert review.references == ()
+    assert parse_node(pr_node(20), REQUESTED).requested is True
 
 
 def test_results_of_the_wrong_type_are_ignored():
@@ -134,15 +136,18 @@ MARKERS = {
 }
 
 
-def test_fetch_items_marks_a_pull_request_reviewed_when_any_search_says_so():
-    client = FakeSearch({REVIEWED: [pr_node(20)], REQUESTED: [pr_node(20), pr_node(21)]})
+def test_fetch_items_merges_what_each_review_search_found():
+    client = FakeSearch(
+        {REVIEWED: [pr_node(20), pr_node(22)], REQUESTED: [pr_node(20), pr_node(21)]}
+    )
     route = Route(repos=("acme/api",), team="ENG")
 
     items = fetch_items(client, route, "alice", SyncOptions())
 
-    assert [(i.number, i.kind, i.reviewed) for i in items] == [
-        (20, Kind.REVIEW, True),
-        (21, Kind.REVIEW, False),
+    assert [(i.number, i.kind, i.reviewed, i.requested) for i in items] == [
+        (20, Kind.REVIEW, True, True),  # reviewed, then asked again
+        (21, Kind.REVIEW, False, True),
+        (22, Kind.REVIEW, True, False),
     ]
 
 

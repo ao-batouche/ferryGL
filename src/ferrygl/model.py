@@ -45,6 +45,7 @@ class GitHubItem:
     body: str = ""
     references: tuple[ItemRef, ...] = ()  # pull requests: issues they close or mention
     reviewed: bool = False  # reviews: you submitted at least one review
+    requested: bool = False  # reviews: your review is currently requested
 
     @property
     def key(self) -> str:

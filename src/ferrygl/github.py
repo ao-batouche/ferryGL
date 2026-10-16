@@ -137,8 +137,9 @@ class GitHubClient:
 
 def search_queries(route: Route, login: str, sync: SyncOptions) -> list[tuple[str, str]]:
     """The GitHub searches for one route, as ``(role, query)`` pairs."""
+    # "user:" matches the repositories of an organization as well as a user.
     scope = " ".join(
-        f"org:{repo.split('/')[0]}" if repo.endswith("/*") else f"repo:{repo}"
+        f"user:{repo.split('/')[0]}" if repo.endswith("/*") else f"repo:{repo}"
         for repo in route.repos
     )
     since = f" updated:>={sync.since.isoformat()}" if sync.since else ""
@@ -163,7 +164,11 @@ def fetch_items(
                 continue
             previous = found.get(item.key)
             if previous is not None and previous.kind is Kind.REVIEW:
-                item = replace(item, reviewed=previous.reviewed or item.reviewed)
+                item = replace(
+                    item,
+                    reviewed=previous.reviewed or item.reviewed,
+                    requested=previous.requested or item.requested,
+                )
             found[item.key] = item
     return sorted(found.values(), key=lambda i: (i.repo.lower(), i.number))
 
@@ -202,6 +207,7 @@ def parse_node(node: dict[str, Any], role: str) -> GitHubItem | None:
         kind=Kind.REVIEW,
         is_draft=bool(node.get("isDraft")),
         reviewed=role == REVIEWED,
+        requested=role == REQUESTED,
         **common,
     )
 
