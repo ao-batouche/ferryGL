@@ -15,7 +15,7 @@ anything changes. Each step shows the commands to run and what they print.
 ```console
 $ pipx install ferrygl
 $ ferrygl --version
-ferrygl 0.2.0
+ferrygl 0.2.1
 ```
 
 `uv tool install ferrygl` and `pip install ferrygl` work too. If your shell can't find
