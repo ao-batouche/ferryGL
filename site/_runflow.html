@@ -1,0 +1,114 @@
+<figure class="runflow">
+  <div class="runflow-bar">
+    <button type="button" class="runflow-play" aria-pressed="false">
+      <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.6v12.8a1 1 0 0 0 1.5.86l10.2-6.4a1 1 0 0 0 0-1.72L9.5 4.74A1 1 0 0 0 8 5.6Z"/></svg>
+      <svg class="icon-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/></svg>
+      <span class="runflow-play-label">Play a run</span>
+    </button>
+    <label class="runflow-switch">
+      <input type="checkbox" checked>
+      <span class="runflow-switch-track" aria-hidden="true"></span>
+      <span>with <code>--apply</code></span>
+    </label>
+    <ul class="runflow-legend" aria-label="Arrows">
+      <li class="is-read">reads</li>
+      <li class="is-write">writes</li>
+      <li class="is-step">inside ferryGL</li>
+    </ul>
+  </div>
+  <div class="runflow-canvas"></div>
+  <div class="runflow-panel" aria-live="polite"></div>
+  <noscript><p class="runflow-noscript">Turn on JavaScript to explore this diagram. The steps below describe the same run.</p></noscript>
+  <script type="application/json" class="runflow-model">
+{
+  "label": "Diagram of one ferryGL run: it reads GitHub and Linear, plans, prints the plan and, with --apply, writes to Linear",
+  "group": "ferrygl sync",
+  "intro": "Hover over or tap a box or an arrow to see what it does, or play a run to follow the steps in order.",
+  "nodes": [
+    {
+      "id": "config", "step": 1, "title": "Config", "sub": "ferrygl.toml", "code": ["config.py", "cli.py"],
+      "text": "Reads `ferrygl.toml` into frozen dataclasses, and finds the Linear API key: `LINEAR_API_KEY`, else `[linear] api_key_file`. An invalid file or a missing key stops the run with exit status 2.",
+      "reads": "Your config file and API key",
+      "writes": "Nothing"
+    },
+    {
+      "id": "setup", "step": 2, "title": "Setup", "sub": "teams, states", "code": ["sync.py"],
+      "text": "Asks Linear whose API key it is, then resolves every route's team, workflow states, project and label. If one is missing, the run stops with exit status 2 before GitHub is read.",
+      "reads": "Linear: the key's owner, teams, states, projects and labels",
+      "writes": "Nothing"
+    },
+    {
+      "id": "read", "step": 3, "title": "Read", "sub": "GitHub, Linear", "code": ["github.py", "linear.py"],
+      "text": "For each route, runs one GitHub search per enabled role and merges the results into one item per URL. Then it looks up the Linear links to every item's URL and, if an item has no Linear issue yet, loads your issues in the route's team as candidates for adoption.",
+      "reads": "GitHub: issues and pull requests. Linear: links, the state recorded on them, and your issues",
+      "writes": "Nothing"
+    },
+    {
+      "id": "plan", "step": 4, "title": "Plan", "sub": "pure, no I/O", "code": ["plan.py"],
+      "text": "A pure function from the GitHub items, the Linear links, the candidates and the config to a list of changes. A status moves only when an item's state differs from the `ferrygl_state` recorded on its link, so statuses you set by hand stay put.",
+      "reads": "Only its inputs",
+      "writes": "Changes: create, adopt, link, update, record or skip"
+    },
+    {
+      "id": "print", "step": 5, "title": "Print", "sub": "the preview", "code": ["sync.py"],
+      "text": "Prints every change and a summary. Without `--apply` the run ends here, so a preview runs every step of a real run except the writes.",
+      "reads": "The changes",
+      "writes": "The plan, to your terminal"
+    },
+    {
+      "id": "apply", "step": 6, "title": "Apply", "sub": "--apply only", "code": ["sync.py", "linear.py"], "apply": true,
+      "text": "Makes each change in Linear: the status first, then ferryGL's comment when `[sync] comment` is on, then the links, with the new GitHub state recorded last. If a write fails, the state isn't recorded, and the next run tries again.",
+      "reads": "The changes",
+      "writes": "Linear: issues, statuses, links and comments"
+    },
+    {
+      "id": "github", "title": "GitHub", "sub": "read-only", "code": ["api.github.com"],
+      "text": "ferryGL only sends GitHub read queries, with your own token. It never comments, labels or changes anything there."
+    },
+    {
+      "id": "linear", "title": "Your Linear workspace", "sub": "issues · statuses · links · comments", "code": ["api.linear.app"],
+      "text": "Where ferryGL keeps its state: the metadata of each GitHub link records the state ferryGL last acted on. The next run reads it back, so reruns never create duplicates."
+    }
+  ],
+  "edges": [
+    {"from": "config", "to": "setup", "text": "The routes, the settings and the API key."},
+    {"from": "linear", "to": "setup", "kind": "read", "label": "teams, states", "text": "One query for the API key's owner, then each route's team, its workflow states (once per team), the project and the label."},
+    {"from": "setup", "to": "read", "text": "Every route, with its Linear team, states, project and label resolved."},
+    {"from": "github", "to": "read", "kind": "read", "label": "issues, PRs", "text": "One query for the token's login, then one search per enabled role, up to seven, with 50 results a page. With `prs_with_commits`, also a scan of the pull requests in scope."},
+    {"from": "linear", "to": "read", "kind": "read", "label": "links, state", "text": "`attachmentsForURL` for up to 25 URLs a request and, when an item has no Linear issue yet, your issues in the route's team, 50 a page."},
+    {"from": "read", "to": "plan", "text": "The GitHub items, the Linear links and the candidates. Every read for a route is done before planning starts."},
+    {"from": "plan", "to": "print", "text": "The list of changes, in display order."},
+    {"from": "print", "to": "apply", "apply": true, "text": "The same changes, only with `--apply`."},
+    {"from": "apply", "to": "linear", "kind": "write", "apply": true, "label": "writes", "text": "One request per write: `issueCreate`, `issueUpdate`, `commentCreate`, `attachmentCreate` or `attachmentUpdate`. ferryGL never deletes anything."}
+  ],
+  "steps": [
+    {"node": "config", "edges": []},
+    {"node": "setup", "edges": ["config>setup", "linear>setup"]},
+    {"node": "read", "edges": ["setup>read", "github>read", "linear>read"]},
+    {"node": "plan", "edges": ["read>plan"]},
+    {"node": "print", "edges": ["plan>print"]},
+    {"node": "apply", "edges": ["print>apply"], "apply": true},
+    {"node": "linear", "edges": ["apply>linear"], "apply": true, "title": "Run complete", "text": "The new GitHub states are recorded on the links in Linear, where the next run reads them back."}
+  ],
+  "dryRunEnd": {"node": "print", "edges": [], "title": "Run complete", "text": "Without `--apply`, the run ends after Print, and nothing is written to Linear."},
+  "layouts": {
+    "wide": {
+      "width": 780, "height": 392, "group": [2, 148, 776, 104],
+      "nodes": {
+        "config": [10, 168, 100, 64], "setup": [142, 168, 100, 64], "read": [274, 168, 100, 64],
+        "plan": [406, 168, 100, 64], "print": [538, 168, 100, 64], "apply": [670, 168, 100, 64],
+        "github": [249, 36, 150, 56], "linear": [142, 318, 628, 62]
+      }
+    },
+    "narrow": {
+      "width": 360, "height": 540, "group": [104, 26, 152, 504],
+      "nodes": {
+        "config": [118, 40, 124, 54], "setup": [118, 124, 124, 54], "read": [118, 208, 124, 54],
+        "plan": [118, 292, 124, 54], "print": [118, 376, 124, 54], "apply": [118, 460, 124, 54],
+        "github": [6, 208, 86, 54], "linear": [276, 124, 78, 390, "vertical"]
+      }
+    }
+  }
+}
+  </script>
+</figure>

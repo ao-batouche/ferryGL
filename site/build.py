@@ -20,6 +20,10 @@ Templates have two kinds of placeholder: <!-- include: _name.html --> inserts a 
 site/, and {{name}} inserts a value, such as {{root}}, the path from the page to the site
 root. Files in site/ whose names start with "_" are partials and aren't published.
 
+In docs/, a fenced code block right after a <!-- site: _name.html --> line is shown on GitHub,
+for example a Mermaid diagram, and replaced on the website by the partial site/_name.html,
+for example an interactive version of the same diagram.
+
 The build fails on a link to a page or anchor that doesn't exist, so renaming a heading in
 docs/ can't silently break a link to it.
 """
@@ -47,6 +51,9 @@ ROOT = SITE.parent
 MARKDOWN_API = "https://api.github.com/markdown"
 
 INCLUDE = re.compile(r"<!-- include: (_[\w-]+\.html) -->")
+SITE_BLOCK = re.compile(
+    r"^<!-- site: (_[\w-]+\.html) -->\n(```|~~~)[^\n]*\n.*?^\2[ \t]*$", re.M | re.S
+)
 VALUE = re.compile(r"\{\{(\w+)\}\}")
 # How GitHub's Markdown API renders a heading, with the anchor GitHub itself would use.
 HEADING = re.compile(
@@ -150,7 +157,14 @@ def load_docs(docs: Path) -> list[DocPage]:
 
 
 def render_page(page: DocPage, docs: Path, token: str | None) -> None:
-    text = render_markdown(page.source.read_text("utf-8"), token)
+    # Site blocks become marker paragraphs, which are swapped for their partials at the end.
+    blocks: list[str] = []
+
+    def stash(match: re.Match[str]) -> str:
+        blocks.append(partial(match[1]))
+        return f"FERRYGL-SITE-BLOCK-{len(blocks) - 1}"
+
+    text = render_markdown(SITE_BLOCK.sub(stash, page.source.read_text("utf-8")), token)
 
     def heading(match: re.Match[str]) -> str:
         level, inner, anchor = int(match[1]), match[2], match[3]
@@ -179,6 +193,14 @@ def render_page(page: DocPage, docs: Path, token: str | None) -> None:
     # Plain code blocks get the same frame, and copy button, as highlighted ones.
     text = re.sub(r'<pre(?: lang="[^"]*")?><code>', '<div class="highlight"><pre><code>', text)
     text = text.replace("</code></pre>", "</code></pre></div>")
+    for i, block in enumerate(blocks):
+        marker = f"<p>FERRYGL-SITE-BLOCK-{i}</p>"
+        if marker not in text:
+            raise BuildError(
+                f"{page.source.name}: site block {i} is missing from GitHub's Markdown output; "
+                "put <!-- site: … --> and its fenced block on their own lines"
+            )
+        text = text.replace(marker, block)
     page.body = text
 
     first = re.search(r"<p>(.*?)</p>", text, re.S)

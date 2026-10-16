@@ -6,6 +6,24 @@ data safe.
 
 ferryGL is a small Python package in `src/ferrygl/`, with one runtime dependency, `httpx`.
 
+## How data moves
+
+ferryGL reads from GitHub and from your Linear workspace, plans in memory, and writes only to
+Linear, and only with `--apply`. What a run writes to Linear is what the next run reads back.
+
+<!-- site: _runflow.html -->
+```mermaid
+flowchart LR
+  gh[("GitHub")]
+  lin[("Your Linear workspace")]
+  cfg["Config"] --> setup["Setup"] --> rd["Read"] --> plan["Plan"] --> out["Print"]
+  out -->|"--apply"| apply["Apply"]
+  lin -->|"teams, states"| setup
+  gh -->|"issues, PRs"| rd
+  lin -->|"links, recorded state"| rd
+  apply -->|"writes"| lin
+```
+
 ## A run, step by step
 
 1. **Load the config** (`config.py`) into frozen dataclasses. Any error stops the run with
