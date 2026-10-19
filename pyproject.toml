@@ -1,7 +1,7 @@
 [project]
 name = "ferrygl"
 dynamic = ["version"]
-description = "Copy your GitHub work into your own Linear workspace, from repositories you can read but don't administer."
+description = "Track your work in clients' GitHub repositories in your own Linear workspace, with only your own credentials."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
