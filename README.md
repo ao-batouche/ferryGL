@@ -13,8 +13,10 @@ your workspace, and a client's usually isn't.
 
 ferryGL fills that gap. Using only your own GitHub account and Linear API key, it copies the
 issues and pull requests you work on into your Linear workspace, and keeps their status in
-step with GitHub. Nobody has to install anything in the client's organization, and unlike an
-AI agent doing the same job, ferryGL spends no tokens.
+step with GitHub. Nobody has to install anything in the client's organization. And ferryGL is
+token-free automation: it runs no AI model, so unlike an AI agent doing the same job, it
+spends no tokens. If you work with an AI agent, the agent can run ferryGL for you and read
+only its plan.
 
 > **Status: early version (0.2).** `ferrygl check` and `ferrygl sync` work, and are tested
 > with local fixtures and against a real GitHub repository.
@@ -154,6 +156,7 @@ The documentation is on the website, at https://oussamabatouche.com/ferryGL/. It
 | [Configuration](https://oussamabatouche.com/ferryGL/docs/configuration.html) | Every setting in `ferrygl.toml`, and checks in your editor |
 | [Sync rules](https://oussamabatouche.com/ferryGL/docs/sync-rules.html) | Which items are synced, how they map to Linear issues, and how statuses move |
 | [Commands](https://oussamabatouche.com/ferryGL/docs/commands.html) | `check` and `sync`, reading the plan, exit statuses, schedules, VS Code, troubleshooting |
+| [AI agents](https://oussamabatouche.com/ferryGL/docs/ai-agents.html) | Have an AI agent run ferryGL for you, for a fraction of the tokens |
 | [Data and privacy](https://oussamabatouche.com/ferryGL/docs/data-and-privacy.html) | What ferryGL reads, what it writes to Linear, and what it keeps |
 | [Architecture](https://oussamabatouche.com/ferryGL/docs/architecture.html) | How a run works inside, request costs, retries and limits |
 
@@ -164,6 +167,15 @@ The documentation is on the website, at https://oussamabatouche.com/ferryGL/. It
 - React instantly. There are no webhooks: Linear catches up each time ferryGL runs.
 - Sync every issue in a repository for a whole team. Linear's GitHub integration does that
   when you can install it.
+
+## Citing
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23475998.svg)](https://doi.org/10.5281/zenodo.23475998)
+
+A [white paper](https://doi.org/10.5281/zenodo.23475998), archived on Zenodo, describes
+ferryGL's design and safety rules, and evaluates them. To cite ferryGL, use GitHub's
+**Cite this repository** button, or the reference in
+[`docs/paper`](https://github.com/ao-batouche/ferryGL/tree/main/docs/paper).
 
 ## Contributing
 

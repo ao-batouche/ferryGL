@@ -1,0 +1,34 @@
+tokenizer,text,characters,tokens,characters_per_token
+OpenAI o200k_base,tool results and calls,92548,32358,2.86
+OpenAI o200k_base,instructions and tools,12323,3062,4.02
+OpenAI o200k_base,delegation: instructions and ferryGL's output,626,171,3.66
+DeepSeek V4 Pro,tool results and calls,92548,33624,2.75
+DeepSeek V4 Pro,instructions and tools,12323,3081,4.0
+DeepSeek V4 Pro,delegation: instructions and ferryGL's output,626,170,3.68
+DeepSeek V4.1 Flash,tool results and calls,92548,33624,2.75
+DeepSeek V4.1 Flash,instructions and tools,12323,3081,4.0
+DeepSeek V4.1 Flash,delegation: instructions and ferryGL's output,626,170,3.68
+Qwen3.8 Max,tool results and calls,92548,37000,2.5
+Qwen3.8 Max,instructions and tools,12323,3165,3.89
+Qwen3.8 Max,delegation: instructions and ferryGL's output,626,180,3.48
+Qwen3.8 Flash,tool results and calls,92548,37000,2.5
+Qwen3.8 Flash,instructions and tools,12323,3165,3.89
+Qwen3.8 Flash,delegation: instructions and ferryGL's output,626,180,3.48
+GLM-5.3,tool results and calls,92548,32919,2.81
+GLM-5.3,instructions and tools,12323,3063,4.02
+GLM-5.3,delegation: instructions and ferryGL's output,626,169,3.7
+GLM-5.3-Flash,tool results and calls,92548,32919,2.81
+GLM-5.3-Flash,instructions and tools,12323,3063,4.02
+GLM-5.3-Flash,delegation: instructions and ferryGL's output,626,169,3.7
+MiniMax-M3,tool results and calls,92548,31683,2.92
+MiniMax-M3,instructions and tools,12323,3041,4.05
+MiniMax-M3,delegation: instructions and ferryGL's output,626,171,3.66
+Mistral Small 4,tool results and calls,92548,38958,2.38
+Mistral Small 4,instructions and tools,12323,3134,3.93
+Mistral Small 4,delegation: instructions and ferryGL's output,626,180,3.48
+Kimi K3,tool results and calls,92548,31620,2.93
+Kimi K3,instructions and tools,12323,3034,4.06
+Kimi K3,delegation: instructions and ferryGL's output,626,171,3.66
+Kimi K2.7 Code,tool results and calls,92548,31620,2.93
+Kimi K2.7 Code,instructions and tools,12323,3034,4.06
+Kimi K2.7 Code,delegation: instructions and ferryGL's output,626,171,3.66

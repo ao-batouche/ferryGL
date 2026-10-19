@@ -1,0 +1,51 @@
+% State keys, as recorded in ferrygl_state, and the Linear status each one leads to.
+\begin{tikzpicture}[x=1cm, y=1cm,
+    sk/.style={statekey, inner sep=1.5pt},
+    edge/.style={line width=0.9pt, draw=#1!75},
+    st/.style={minimum width=22mm, minimum height=5.6mm, font=\sffamily\small\bfseries}]
+  % Statuses
+  \node[todo, st] (todo) at (7.8,5.2) {Todo};
+  \node[progress, st] (prog) at (7.8,4.0) {In Progress};
+  \node[review, st] (rev) at (7.8,2.6) {In Review};
+  \node[done, st] (done) at (7.8,1.2) {Done};
+  \node[canceled, st] (canc) at (7.8,0.0) {Canceled};
+
+  % Issues, with the user's pull requests that refer to them
+  \foreach \key/\y/\to/\col in {
+      issue:open/5.2/todo/stTodo,
+      issue:open:pr\_draft/4.0/prog/stProgress,
+      issue:open:pr\_open/2.85/rev/stReview,
+      issue:closed:completed/1.2/done/stDone,
+      issue:closed:not\_planned/0.0/canc/stCanceled} {
+    \node[sk, anchor=east] (k) at (4.6,\y) {\key};
+    \draw[edge=\col] (k.east) -- (\to.west);
+  }
+  \node[sk, anchor=east] (merged) at (4.6,2.3) {issue:open:pr\_merged};
+  \draw[edge=stReview, dashed] (merged.east) -- node[below, sloped, note, pos=0.5] {only if new} (rev.west);
+
+  % Pull requests: the user's own (pr) and other people's (involved)
+  \foreach \key/\y/\to/\col in {
+      involved:requested/5.2/todo/stTodo,
+      pr:draft/4.2/prog/stProgress,
+      involved:draft/3.8/prog/stProgress,
+      pr:open/3.0/rev/stReview,
+      involved:open/2.6/rev/stReview,
+      involved:reviewed/2.2/rev/stReview,
+      pr:merged/1.4/done/stDone,
+      involved:merged/1.0/done/stDone,
+      pr:closed/0.2/canc/stCanceled,
+      involved:closed/-0.2/canc/stCanceled} {
+    \node[sk, anchor=west] (k) at (11.0,\y) {\key};
+    \draw[edge=\col] (k.west) -- (\to.east);
+  }
+
+  % Headings
+  \node[font=\sffamily\small\bfseries, anchor=south east] at (4.6,5.9) {Issues};
+  \node[note, anchor=north east, align=right] at (4.6,5.9) {};
+  \node[font=\sffamily\small\bfseries, anchor=south] at (7.8,5.9) {Linear status};
+  \node[font=\sffamily\small\bfseries, anchor=south west] at (11.0,5.9) {Pull requests};
+  \node[note, anchor=north, text width=4.4cm, align=right] at (2.4,-0.55)
+    {with the pull requests you opened that refer to them};
+  \node[note, anchor=north, text width=4.4cm, align=left] at (13.2,-0.55)
+    {yours (\texttt{pr}) and other people's (\texttt{involved})};
+\end{tikzpicture}

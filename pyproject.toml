@@ -1,13 +1,25 @@
 [project]
 name = "ferrygl"
 dynamic = ["version"]
-description = "Track your work in clients' GitHub repositories in your own Linear workspace, with only your own credentials."
+description = "Token-free automation: track your work in clients' GitHub repositories in your own Linear workspace, with only your own credentials."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Oussama Batouche" }]
-keywords = ["linear", "github", "sync", "issues", "pull-requests"]
+keywords = [
+    "linear",
+    "github",
+    "sync",
+    "issues",
+    "pull-requests",
+    "issue-tracking",
+    "token-free",
+    "automation",
+    "ai-agents",
+    "llm",
+    "cli",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
@@ -39,7 +51,7 @@ build-backend = "hatchling.build"
 path = "src/ferrygl/__init__.py"
 
 [tool.hatch.build.targets.sdist]
-exclude = ["/assets", "/.github", "/site"]
+exclude = ["/assets", "/.github", "/site", "/docs/paper"]
 
 [tool.ruff]
 line-length = 100

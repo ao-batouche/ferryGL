@@ -1,0 +1,38 @@
+% The steps of a run, and what each reads from GitHub and Linear or writes to Linear.
+\begin{tikzpicture}[x=1cm, y=1cm]
+  \node[stage] (config) at (0.75,0) {Config};
+  \node[stage] (setup) at (3.05,0) {Setup};
+  \node[stage] (read) at (6.05,0) {Read};
+  \node[stage, fill=fgSoft, line width=1.1pt] (plan) at (8.55,0) {Plan};
+  \node[stage] (print) at (10.95,0) {Print};
+  \node[stage] (apply) at (13.75,0) {Apply};
+
+  \draw[flow] (config) -- (setup);
+  \draw[flow] (setup) -- (read);
+  \draw[flow] (read) -- (plan);
+  \draw[flow] (plan) -- (print);
+  \draw[flow, dashed] (print) -- node[above, font=\ttfamily\scriptsize] {-{}-apply} (apply);
+
+  % Per route
+  \begin{scope}[on background layer]
+    \node[region, fit={(read) (apply)}, inner xsep=10pt, inner ysep=14pt, yshift=-4pt] (route) {};
+  \end{scope}
+  \node[note, anchor=south east] at (route.north east) {for each route};
+
+  % GitHub, read only
+  \node[box, minimum width=3.0cm, minimum height=0.8cm, font=\sffamily\small\bfseries] (github) at (6.05,2.15) {GitHub};
+  \draw[readflow] (github) -- node[right, note, align=left] {issues and pull requests,\\one search per role} (read);
+
+  % Linear
+  \node[box, minimum width=12.6cm, minimum height=0.8cm, anchor=west, font=\sffamily\small\bfseries]
+    (linear) at (2.15,-2.55) {Your Linear workspace};
+  \draw[readflow] (linear.north -| setup) -- node[left, note, align=right] {you, team, states,\\project, label} (setup);
+  \draw[readflow] (linear.north -| read) -- node[left, note, align=right, pos=0.45] {links to each item,\\with recorded state;\\your issues, to adopt} (read);
+  \draw[writeflow] (apply) -- node[right, note, align=left, pos=0.55] {create, adopt,\\link, update,\\record} (linear.north -| apply);
+
+  % Notes
+  \node[note, anchor=south, text width=2.6cm] at ($(setup.north)+(0,0.15)$)
+    {a missing team, state, project or label stops the run};
+  \node[note, anchor=north] at ($(plan.south)+(0,-0.12)$) {pure: no I/O};
+  \node[note, anchor=north, text width=2.2cm] at ($(print.south)+(0,-0.12)$) {the same plan,\\with or without\\\texttt{-{}-apply}};
+\end{tikzpicture}

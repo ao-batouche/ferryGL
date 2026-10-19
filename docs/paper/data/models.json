@@ -1,0 +1,10 @@
+{
+  "route_items": 100,
+  "changes_per_run": 4,
+  "requests_per_run": 21,
+  "ferrygl_seconds_per_run": 10.6,
+  "actions_minute_price": 0.006,
+  "actions_free_minutes": 2000,
+  "models": 24,
+  "providers": 10
+}

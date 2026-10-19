@@ -1,0 +1,51 @@
+% Edge-triggered status updates: ferryGL moves a status only when the GitHub state differs
+% from the state recorded on the link. A level-triggered sync would undo the user's edits.
+\begin{tikzpicture}[x=1cm, y=1cm,
+    seg/.style={minimum height=4.8mm, inner sep=0pt, font=\sffamily\scriptsize\bfseries,
+      text=white, rounded corners=1pt},
+    ghost/.style={seg, fill opacity=0.4, text opacity=1, text=fgNavy},
+    keyseg/.style={draw=fgNavy!60, fill=white, minimum height=4.8mm, inner sep=0pt,
+      font=\ttfamily\scriptsize, rounded corners=1pt},
+    lane/.style={font=\sffamily\small, anchor=east, align=right, text=fgNavy}]
+  \newcommand{\seg}[5]{\node[#4, minimum width={(#3-#2)*1cm-0.6pt}, anchor=west] at (#2,#1) {#5};}
+
+  % Runs, and what each one does
+  \foreach \x/\n/\what in {3.9/1/create, 6.9/2/no change, 10.2/3/update, 13.2/4/no change} {
+    \draw[fgSubtle, dashed, line width=0.5pt] (\x,-0.35) -- (\x,3.75);
+    \node[note, anchor=south, align=center] at (\x,3.75) {\textbf{run \n}\\\what};
+  }
+  % Events between runs
+  \draw[fgBlue, line width=0.8pt] (8.4,3.05) -- (8.4,3.75) node[above, note, text=fgBlue] {merged};
+  \foreach \x in {5.3, 11.6} {
+    \fill[fgRed] (\x,1.47) -- ++(-0.11,0.2) -- ++(0.22,0) -- cycle;
+    \node[note, text=fgRed, anchor=south, inner sep=1pt] at (\x,1.68) {you move it};
+  }
+
+  % Lanes
+  \node[lane] at (2.85,3.3) {GitHub: PR \#16};
+  \node[lane] at (2.85,2.45) {recorded state};
+  \node[lane] at (2.85,1.2) {\textbf{ferryGL}: ENG-12};
+  \node[lane, text=fgMuted] at (2.85,0.0) {a level-triggered\\sync, for contrast};
+  \draw[fgBorder, line width=0.5pt] (0.4,0.6) -- (15.9,0.6);
+
+  \seg{3.3}{3.2}{8.4}{keyseg}{pr:open}
+  \seg{3.3}{8.4}{15.9}{keyseg}{pr:merged}
+  \seg{2.45}{3.9}{10.2}{keyseg}{pr:open}
+  \seg{2.45}{10.2}{15.9}{keyseg}{pr:merged}
+
+  \seg{1.2}{3.9}{5.3}{seg, fill=stReview}{In Review}
+  \seg{1.2}{5.3}{10.2}{seg, fill=stProgress}{In Progress}
+  \seg{1.2}{10.2}{11.6}{seg, fill=stDone}{Done}
+  \seg{1.2}{11.6}{15.9}{seg, fill=stReview}{In Review}
+
+  \seg{0.0}{3.9}{5.3}{ghost, fill=stReview}{In Review}
+  \seg{0.0}{5.3}{6.9}{ghost, fill=stProgress}{In Progress}
+  \seg{0.0}{6.9}{10.2}{ghost, fill=stReview}{In Review}
+  \seg{0.0}{10.2}{11.6}{ghost, fill=stDone}{Done}
+  \seg{0.0}{11.6}{13.2}{ghost, fill=stReview}{In Review}
+  \seg{0.0}{13.2}{15.9}{ghost, fill=stDone}{Done}
+  \foreach \x in {6.9, 13.2} {
+    \node[fgRed, font=\sffamily\small\bfseries, fill=white, inner sep=0.5pt] at (\x,-0.42) {\(\times\)};
+    \node[note, text=fgRed, anchor=north west, inner sep=1pt] at (\x+0.12,-0.3) {your edit undone};
+  }
+\end{tikzpicture}

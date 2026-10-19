@@ -1,0 +1,47 @@
+% A home: the Linear issue of acme/api#252, with the pull request that rides with it.
+\begin{tikzpicture}[x=1cm, y=1cm,
+    meta/.style={font=\ttfamily\scriptsize, text=fgNavy, anchor=north west, inner sep=0pt,
+      align=left},
+    card/.style={box, align=flush left, text width=4.1cm, inner sep=5pt}]
+  % GitHub
+  \node[font=\sffamily\small\bfseries, anchor=west] at (0,4.75) {GitHub};
+  \node[card, anchor=north west] (issue) at (0,4.35)
+    {\texttt{acme/api\#252}\enspace\scriptsize\color{fgMuted}issue, open\\[1pt]
+     Store shared configuration once\\[1pt]
+     \scriptsize\color{fgMuted}assigned to you};
+  \node[card, anchor=north west] (pr) at (0,1.15)
+    {\texttt{acme/api\#335}\enspace\scriptsize\color{fgMuted}pull request\\[1pt]
+     Load settings from one file\\[1pt]
+     \scriptsize\color{fgMuted}opened by you; its description says ``Part of \#252''};
+  \draw[->, dashed, fgMuted, line width=0.6pt] (pr.north) -- node[right, note] {refers to} (issue.south);
+
+  % Linear
+  \node[font=\sffamily\small\bfseries, anchor=west] at (6.0,4.75) {Your Linear workspace};
+  \node[region, anchor=north west, minimum width=9.9cm, minimum height=5.85cm] (lin) at (6.0,4.4) {};
+  \node[anchor=north west, align=left, inner sep=0pt] at ($(lin.north west)+(0.25,-0.2)$)
+    {\textbf{ENG-7}\enspace Store shared configuration once \#252\\[1pt]
+     \scriptsize\color{fgMuted}assigned to you; its description links \#252 and \#335};
+  \node[review, anchor=north east] at ($(lin.north east)+(-0.25,-0.22)$) {In Review};
+
+  \node[box, anchor=north west, minimum width=5.0cm, minimum height=2.45cm] (link1) at (6.25,3.3) {};
+  \node[anchor=north west, inner sep=0pt] at ($(link1.north west)+(0.15,-0.15)$)
+    {\textbf{Issue \#252}\enspace\scriptsize\color{fgMuted}acme/api};
+  \node[meta] at ($(link1.north west)+(0.15,-0.62)$)
+    {ferrygl\_v: 1\\ferrygl\_kind: issue\\ferrygl\_state: issue:open:pr\_open\\
+     ferrygl\_synced\_at:\\\quad 2026-10-19T09:00:00+00:00};
+  \node[note, anchor=west, align=left, text width=4.1cm] at ($(link1.east)+(0.2,0)$)
+    {\textbf{The home of \#252.} ferryGL compares \texttt{ferrygl\_state} with the state of
+     \#252 and its pull requests on GitHub, and moves \mbox{ENG-7} only when they differ.};
+
+  \node[box, anchor=north west, minimum width=5.0cm, minimum height=1.7cm] (link2) at (6.25,0.6) {};
+  \node[anchor=north west, inner sep=0pt] at ($(link2.north west)+(0.15,-0.15)$)
+    {\textbf{PR \#335}\enspace\scriptsize\color{fgMuted}acme/api};
+  \node[meta] at ($(link2.north west)+(0.15,-0.62)$)
+    {ferrygl\_v: 1\\ferrygl\_kind: pr\\ferrygl\_linked\_to: acme/api\#252};
+  \node[note, anchor=west, align=left, text width=4.1cm] at ($(link2.east)+(0.2,0)$)
+    {\textbf{A riding pull request.} \#335 counts toward the status of \mbox{ENG-7}, and sets
+     no status of its own.};
+
+  \draw[readflow] (issue.east) to[out=0, in=180] (link1.west);
+  \draw[readflow] (pr.east) to[out=0, in=180] (link2.west);
+\end{tikzpicture}

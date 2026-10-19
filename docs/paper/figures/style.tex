@@ -1,0 +1,53 @@
+% Colors and TikZ styles shared by the figures. The colors are the website's
+% (site/style.css), so the figures match ferryGL's documentation.
+\definecolor{fgNavy}{HTML}{0C2137}
+\definecolor{fgTeal}{HTML}{0A7C6C}
+\definecolor{fgBrand}{HTML}{24D5BB}
+\definecolor{fgBlue}{HTML}{0B6AA6}
+\definecolor{fgMuted}{HTML}{45566B}
+\definecolor{fgSubtle}{HTML}{66778C}
+\definecolor{fgBorder}{HTML}{CDD7E2}
+\definecolor{fgSoft}{HTML}{F5F8FB}
+\definecolor{fgCode}{HTML}{F2F5F9}
+\definecolor{fgRed}{HTML}{C2185B}
+\definecolor{stTodo}{HTML}{8592A3}
+\definecolor{stProgress}{HTML}{E2A336}
+\definecolor{stReview}{HTML}{1FA37A}
+\definecolor{stDone}{HTML}{4F72E8}
+\definecolor{stCanceled}{HTML}{8592A3}
+
+\tikzset{
+  >={Stealth[length=2.2mm]},
+  every node/.style={font=\sffamily\small, text=fgNavy},
+  box/.style={draw=fgBorder, fill=white, rounded corners=2pt, line width=0.6pt,
+    inner sep=4pt, align=center},
+  region/.style={draw=fgBorder, fill=fgSoft, rounded corners=4pt, line width=0.6pt},
+  stage/.style={draw=fgNavy, fill=white, rounded corners=2pt, line width=0.7pt,
+    minimum height=8mm, minimum width=15mm, align=center},
+  store/.style={cylinder, shape border rotate=90, aspect=0.18, draw=fgNavy, fill=fgSoft,
+    line width=0.7pt, minimum width=24mm, minimum height=11mm, align=center},
+  flow/.style={->, line width=0.8pt, draw=fgNavy},
+  readflow/.style={->, line width=0.8pt, draw=fgBlue},
+  writeflow/.style={->, line width=0.8pt, draw=fgTeal},
+  note/.style={font=\sffamily\scriptsize, text=fgMuted, align=center},
+  statekey/.style={font=\ttfamily\scriptsize, text=fgNavy},
+  status/.style={rounded corners=2pt, text=white, font=\sffamily\scriptsize\bfseries,
+    minimum height=4.6mm, minimum width=19mm, inner sep=2pt},
+  todo/.style={status, fill=stTodo},
+  progress/.style={status, fill=stProgress},
+  review/.style={status, fill=stReview},
+  done/.style={status, fill=stDone},
+  canceled/.style={status, fill=stCanceled, pattern color=white},
+}
+
+\pgfplotsset{
+  ferrygl/.style={
+    label style={font=\sffamily\small},
+    tick label style={font=\sffamily\scriptsize},
+    /pgf/number format/assume math mode=true,
+    every axis plot/.append style={line width=1.1pt, mark size=1.5pt},
+    legend cell align=left,
+    legend style={draw=none, fill=none, nodes={font=\sffamily\scriptsize, text=fgNavy}},
+    axis line style={fgMuted}, tick style={fgMuted},
+  },
+}

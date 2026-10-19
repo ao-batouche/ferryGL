@@ -1,0 +1,29 @@
+% Yearly cost of an AI agent for a team of 100, two runs a workday, by model, from
+% data/models-figure.csv (evaluation/compare_models.py). ferryGL alone spends no tokens.
+\pgfplotstableread[col sep=comma]{data/models-figure.csv}\modelstable
+\begin{tikzpicture}
+  \begin{axis}[ferrygl,
+      xbar, xmode=log, log origin=infty, log ticks with fixed point,
+      width=12.8cm, height=15.5cm,
+      xmin=20, xmax=200000,
+      xlabel={dollars per year for a team of 100, two runs a workday},
+      ytick=data, y dir=reverse,
+      yticklabels from table={\modelstable}{label},
+      yticklabel style={font=\sffamily\scriptsize},
+      bar width=3.2pt, enlarge y limits=0.025,
+      legend columns=2, legend style={at={(0.5,1.015)}, anchor=south, draw=none, fill=none,
+        /tikz/every even column/.append style={column sep=1em},
+        nodes={font=\sffamily\scriptsize, text=fgNavy}},
+      legend cell align=left,
+    ]
+    \addplot[draw=none, fill=fgNavy] table[x=itself, y expr=\coordindex] {\modelstable};
+    \addlegendentry{agent doing the job itself (plausible)}
+    \addplot[draw=none, fill=fgSubtle!70] table[x=itself_lean, y expr=\coordindex] {\modelstable};
+    \addlegendentry{agent doing the job itself (lean)}
+    \addplot[draw=none, fill=fgBlue!80] table[x=delegating, y expr=\coordindex] {\modelstable};
+    \addlegendentry{agent delegating to \ferry{} (plausible)}
+    \draw[fgRed, dashed, line width=0.8pt] (axis cs:\CmpActionsHundredYearValue,-1) -- (axis cs:\CmpActionsHundredYearValue,24);
+    \addlegendimage{fgRed, dashed, line width=0.8pt}
+    \addlegendentry{\ferry{} alone, paid GitHub Actions minutes (\$0 on own machines)}
+  \end{axis}
+\end{tikzpicture}

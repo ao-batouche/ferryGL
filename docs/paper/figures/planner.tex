@@ -1,0 +1,17 @@
+% Median planning time per route, from data/planner-time.csv (evaluation/bench.py).
+\begin{tikzpicture}
+  \begin{axis}[ferrygl,
+      width=8.4cm, height=5.6cm,
+      xmode=log, ymode=log, xmin=7, xmax=14000, ymin=0.01, ymax=1000,
+      log ticks with fixed point,
+      xlabel={GitHub items in the route}, ylabel={median planning time (ms)},
+      legend pos=north west,
+    ]
+    \addplot[fgNavy, mark=square*, dashed] table[col sep=comma, x=items, y=median_ms_new] {data/planner-time.csv};
+    \addlegendentry{a fifth are new, so matched for adoption}
+    \addplot[fgTeal, mark=*] table[col sep=comma, x=items, y=median_ms_known] {data/planner-time.csv};
+    \addlegendentry{every item has a Linear issue}
+    \addplot[fgSubtle, dotted, line width=0.8pt, domain=10:10000, samples=2] {0.0034*x};
+    \addlegendentry{linear growth, for reference}
+  \end{axis}
+\end{tikzpicture}
