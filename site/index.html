@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <!-- include: _head.html -->
-<title>ferryGL · Your GitHub work, in your own Linear workspace</title>
-<meta name="description" content="ferryGL copies the GitHub issues and pull requests you work on into your own Linear workspace, and keeps their status up to date, using only your own credentials.">
-<meta property="og:title" content="ferryGL · Your GitHub work, in your own Linear workspace">
-<meta property="og:description" content="Copies the GitHub issues and pull requests you work on into your own Linear workspace, and keeps their status up to date. Read-only on GitHub.">
+<title>ferryGL · Your work in client repos, tracked in your own Linear</title>
+<meta name="description" content="Track your work in clients' GitHub repositories in your own Linear workspace. ferryGL copies the issues and pull requests you work on and keeps their status up to date, with only your own credentials and no AI tokens.">
+<meta property="og:title" content="ferryGL · Your work in client repos, tracked in your own Linear">
+<meta property="og:description" content="Linear's GitHub integration can't reach a client's repositories. ferryGL brings the issues and pull requests you work on there into your own Linear workspace, read-only on GitHub and with no AI tokens.">
 </head>
 <body data-page="home">
 <!-- include: _header.html -->
@@ -19,8 +19,8 @@
           Early release
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
         </a>
-        <h1>Your GitHub work, in your own <span class="accent">Linear workspace</span></h1>
-        <p class="lead">ferryGL copies the GitHub issues and pull requests you work on into your own Linear workspace, and keeps their status up to date. It works in repositories you can read but don't administer, using only your own credentials.</p>
+        <h1>Your work in client repos, tracked in <span class="accent">your own Linear</span></h1>
+        <p class="lead">Linear's GitHub integration syncs only repositories whose organization is connected to your workspace, and a client's usually isn't. ferryGL fills that gap: with just your own GitHub account and Linear API key, it copies the issues and pull requests you work on into your Linear workspace, and keeps their status up to date.</p>
 
         <div class="install">
           <div class="install-tabs" role="tablist" aria-label="Install with">
@@ -50,9 +50,10 @@
         </div>
 
         <ul class="hero-meta">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>No admin access needed</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>No AI tokens spent</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Read-only on GitHub</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Python 3.11+</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>MIT license</li>
         </ul>
       </div>
 
@@ -88,29 +89,36 @@ acme/api#348  involved  adopt   -&gt; ENG-9
       <div class="section-head left">
         <p class="eyebrow">Why ferryGL</p>
         <h2>Their GitHub, your Linear</h2>
-        <p>You write code in someone else's GitHub organization: a client, a partner, an open-source project. But your team plans its work in its own Linear workspace.</p>
-        <p>So you copy issues and pull requests into Linear by hand, and move their status as they progress. ferryGL does that for you.</p>
+        <p>Your GitHub account contributes to repositories that belong to another organization: a client, a partner, an open-source project. Your team tracks its work in its own Linear workspace.</p>
+        <p>Linear's GitHub integration can't bring that work across. So you copy issues and pull requests into Linear by hand, or spend AI tokens to have an agent do it. ferryGL does it for you, with neither.</p>
       </div>
       <div class="why-list">
         <div class="card why-item">
           <div class="why-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
           <div>
-            <h3>Linear's GitHub integration needs an admin</h3>
-            <p>An admin of the GitHub organization has to install it.</p>
+            <h3>Linear's GitHub integration needs the client's admin</h3>
+            <p>One of the client's organization owners or repository admins has to install it for your workspace.</p>
           </div>
         </div>
         <div class="card why-item">
           <div class="why-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 0 1 4.6 7"/><path d="M8 12h3"/><path d="m3 3 18 18"/></svg></div>
           <div>
             <h3>One organization, one workspace</h3>
-            <p>A GitHub organization can connect to only one Linear workspace. If it uses Linear itself, yours can't connect to it.</p>
+            <p>A GitHub organization can connect to only one Linear workspace. If the client uses Linear, it's connected to theirs, not yours.</p>
+          </div>
+        </div>
+        <div class="card why-item">
+          <div class="why-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg></div>
+          <div>
+            <h3>An AI agent can do it, for tokens</h3>
+            <p>An agent such as Claude spends tokens on every run, rereading the same items and repeating the same moves, and may not do them the same way twice.</p>
           </div>
         </div>
         <div class="card why-item is-answer">
           <div class="why-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3"/><path d="m16 7 3 3"/><path d="m19 4 2 2"/></svg></div>
           <div>
-            <h3>ferryGL needs neither</h3>
-            <p>It runs with your own GitHub token and Linear API key, and only reads from GitHub.</p>
+            <h3>ferryGL needs no admin and no tokens</h3>
+            <p>It runs with your own GitHub account and Linear API key, only reads from GitHub, and follows fixed rules. Keep your agent's tokens for work that needs them.</p>
           </div>
         </div>
       </div>
@@ -383,8 +391,8 @@ acme/api#348  involved  adopt   -&gt; ENG-9
   <section class="section">
     <div class="container">
       <div class="cta-band">
-        <h2>Stop copying issues by hand</h2>
-        <p>Install ferryGL, preview the first sync, and let Linear keep up with your GitHub work.</p>
+        <h2>Stop copying client work into Linear by hand</h2>
+        <p>Install ferryGL, preview the first sync, and keep your AI tokens for work that needs them.</p>
         <div class="cta-row">
           <a class="button button-primary" href="./docs/getting-started.html">Get started</a>
           <a class="button button-secondary" href="https://github.com/ao-batouche/ferryGL">View on GitHub</a>

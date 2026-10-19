@@ -1,7 +1,16 @@
 # ferryGL documentation
 
-The [README](../README.md) explains what ferryGL does and how it works. These pages cover
-the details.
+ferryGL tracks your work in other organizations' GitHub repositories, such as a client's, in
+your own Linear workspace.
+
+Linear's GitHub integration syncs only repositories whose GitHub organization is connected to
+your workspace, and a client's usually isn't. ferryGL uses your own GitHub account and Linear
+API key instead, so nobody has to install anything in the client's organization. And because
+it makes plain API calls with fixed rules, it spends no tokens, unlike an AI agent doing the
+same job.
+
+The [README](../README.md) explains why ferryGL exists, what it does and how it works. These
+pages cover the details.
 
 | Page | Read it when you want to |
 |---|---|

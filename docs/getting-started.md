@@ -1,12 +1,15 @@
 # Getting started
 
-Install ferryGL, connect it to GitHub and Linear, and run a first sync you can check before
-anything changes. Each step shows the commands to run and what they print.
+ferryGL brings your work in other organizations' GitHub repositories, such as a client's,
+into your own Linear workspace. This page installs it, connects it to GitHub and Linear, and
+runs a first sync you can check before anything changes. Each step shows the commands to run
+and what they print.
 
 ## What you need
 
 - Python 3.11 or later.
-- A GitHub account that can read the repositories you work in.
+- A GitHub account that can read the repositories you work in. Read access is enough: you
+  don't need to administer them, and their organization doesn't need to install anything.
 - A Linear account in the workspace your work should go to, and the key of your team: the
   `ENG` in an issue identifier such as `ENG-123`.
 

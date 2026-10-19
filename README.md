@@ -4,9 +4,17 @@
 
 # ferryGL
 
-ferryGL copies the GitHub issues and pull requests you work on into your own Linear
-workspace, and keeps their status up to date. It works in repositories you can read but
-don't administer, using only your own credentials.
+**Track your work in clients' GitHub repositories in your own Linear workspace.**
+
+You contribute to GitHub repositories that belong to another organization, such as a client.
+Your team tracks its work in its own Linear workspace. Linear's GitHub integration can't
+bring that work across: it syncs only repositories whose GitHub organization is connected to
+your workspace, and a client's usually isn't.
+
+ferryGL fills that gap. Using only your own GitHub account and Linear API key, it copies the
+issues and pull requests you work on into your Linear workspace, and keeps their status in
+step with GitHub. Nobody has to install anything in the client's organization, and unlike an
+AI agent doing the same job, ferryGL spends no tokens.
 
 > **Status: early version (0.2).** `ferrygl check` and `ferrygl sync` work, and are tested
 > with local fixtures and against a real GitHub repository.
@@ -15,13 +23,23 @@ don't administer, using only your own credentials.
 
 ## Why
 
-You write code in someone else's GitHub organization (a client, a partner, an open-source
-project), but your team plans its work in its own Linear workspace. Linear's GitHub
-integration can't connect the two: an admin of the GitHub organization has to install it,
-and an organization can connect to only one Linear workspace.
+Connecting a client's GitHub organization to your Linear workspace takes one of the client's
+organization owners or repository admins, and a GitHub organization can connect to only one
+Linear workspace, often the client's own. The same goes for a partner's organization or an
+open-source project. Here's how the ways to track that work compare:
 
-So you copy issues and pull requests into Linear by hand, and move their status as they
-progress. ferryGL does that for you.
+| | Works in a client's repositories | What each run costs |
+|---|---|---|
+| Linear's GitHub integration | Only if the client connects their organization to your workspace | Nothing |
+| Copying by hand | Yes | Your time, each time something moves on GitHub |
+| An AI agent, such as Claude | Yes | Tokens, to reread the same items and repeat the same moves |
+| **ferryGL** | **Yes, with your own credentials** | **No tokens: plain API calls and fixed rules** |
+
+An AI agent can do this job, but the job is routine: find your GitHub items, compare them
+with Linear, move a few statuses. An agent spends tokens on it every run, and may not do it
+the same way twice. ferryGL follows the same rules every time, shows each change before
+making it, and spends no tokens, so you can keep your agent, and your tokens, for work that
+needs them.
 
 ## What it does
 
