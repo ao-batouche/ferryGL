@@ -1,0 +1,10 @@
+# LaTeX intermediate files; the PDF itself is kept
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.toc
+*.synctex.gz

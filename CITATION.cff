@@ -1,0 +1,43 @@
+cff-version: 1.2.0
+message: "If you use ferryGL in your work, please cite the white paper below."
+title: ferryGL
+abstract: >-
+  ferryGL is token-free automation: it copies the GitHub issues and pull requests a person
+  is part of, one way, into their own Linear workspace, using only their own credentials,
+  and keeps their status in step with GitHub, without running an AI model. AI agents can
+  run it instead of doing the job themselves.
+type: software
+authors:
+  - family-names: Batouche
+    given-names: Oussama
+version: 0.2.1
+date-released: 2026-10-16
+license: MIT
+repository-code: "https://github.com/ao-batouche/ferryGL"
+url: "https://oussamabatouche.com/ferryGL/"
+keywords:
+  - issue tracking
+  - synchronization
+  - token-free automation
+  - token-free synchronization
+  - AI agents
+  - LLM agents
+  - inference cost
+  - deterministic automation
+  - GitHub
+  - Linear
+  - least privilege
+preferred-citation:
+  type: report
+  title: >-
+    ferryGL: Token-Free Automation for Syncing Cross-Organization GitHub Work into Linear
+  authors:
+    - family-names: Batouche
+      given-names: Oussama
+  year: 2026
+  month: 10
+  version: "1.0"
+  notes: White paper
+  doi: 10.5281/zenodo.23475998
+  url: "https://doi.org/10.5281/zenodo.23475998"
+  repository-code: "https://github.com/ao-batouche/ferryGL"

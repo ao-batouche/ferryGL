@@ -90,6 +90,7 @@ Users' Linear workspaces keep what ferryGL writes, so treat these as compatibili
 | `site/` | The website: a hand-written home page, and `build.py`, which renders `docs/` into pages |
 | `site/ferrygl.schema.json` | JSON Schema for `ferrygl.toml`, published on the website for editors |
 | `site/_runflow.html`, `site/main.js` | The interactive run diagram: its JSON model, and the script that draws it |
+| `site/llms.txt` | A summary of ferryGL and links to the docs, for language models and AI agents |
 
 ## Development
 
@@ -139,12 +140,13 @@ The README stays short: what ferryGL does, how it works, and a quick start. Deta
 | `docs/configuration.md` | Every config key and its default, and editor setup for the schema |
 | `docs/sync-rules.md` | Roles, homes, riding pull requests, status rules, adoption |
 | `docs/commands.md` | `check`, `sync`, plan actions, exit statuses, scheduling, VS Code tasks, errors |
+| `docs/ai-agents.md` | Having an AI agent run ferryGL: why, setup, instructions, what it reads |
 | `docs/data-and-privacy.md` | What is read, written to Linear, and kept; link metadata |
 | `docs/architecture.md` | Run steps, state keys, request costs, retries, limits |
 
 The website (https://oussamabatouche.com/ferryGL/) is rebuilt from `docs/` whenever `docs/`
 or `site/` changes on `main`, so a page changed in `docs/` needs no other edit. A new page
-needs a link in `docs/README.md`, which sets the order of the sidebar. The home page,
+needs a link in `docs/README.md`, which sets the order of the sidebar, and in `site/llms.txt`. The home page,
 `site/index.html`, is written by hand: update it when the README's summary, status table or
 quick start changes. The run diagram in `docs/architecture.md` has two versions: a Mermaid
 block for GitHub, and on the website the interactive `site/_runflow.html`, whose texts and

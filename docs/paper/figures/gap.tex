@@ -1,0 +1,45 @@
+% The gap ferryGL fills: work in another organization's repositories, tracked in your own
+% Linear workspace, with your own credentials.
+\begin{tikzpicture}[x=1cm, y=1cm]
+  % The client's GitHub organization
+  \node[region, minimum width=4.3cm, minimum height=3.6cm, anchor=south west] (client) at (0,0) {};
+  \node[anchor=north west, font=\sffamily\small\bfseries] at (client.north west) {Client's GitHub organization};
+  \node[anchor=north west, note] at ($(client.north west)+(0,-0.4)$) {owned and administered by the client};
+  \node[box, minimum width=3.8cm, anchor=north] (repo1) at ($(client.north)+(0,-1.0)$)
+    {\texttt{acme/api}\\[1pt]\scriptsize\color{fgMuted}issue \#252, PR \#335};
+  \node[box, minimum width=3.8cm, anchor=north] (repo2) at ($(repo1.south)+(0,-0.25)$)
+    {\texttt{acme/web}\\[1pt]\scriptsize\color{fgMuted}PR \#348, your review requested};
+
+  % Your Linear workspace
+  \node[region, minimum width=4.3cm, minimum height=3.6cm, anchor=south west] (linear) at (11.55,0) {};
+  \node[anchor=north west, font=\sffamily\small\bfseries] at (linear.north west) {Your Linear workspace};
+  \node[anchor=north west, note] at ($(linear.north west)+(0,-0.4)$) {where your own team plans};
+  \node[box, minimum width=3.8cm, anchor=north, align=flush left, text width=3.6cm] (eng7)
+    at ($(linear.north)+(0,-1.0)$)
+    {\textbf{ENG-7}\\[1pt]\scriptsize\color{fgMuted}issue \#252, PR \#335};
+  \node[review, minimum width=1.5cm, anchor=north east] at ($(eng7.north east)+(-0.1,-0.1)$) {In Review};
+  \node[box, minimum width=3.8cm, anchor=north, align=flush left, text width=3.6cm] (eng9)
+    at ($(eng7.south)+(0,-0.25)$)
+    {\textbf{ENG-9}\\[1pt]\scriptsize\color{fgMuted}PR \#348};
+  \node[todo, minimum width=1.5cm, anchor=north east] at ($(eng9.north east)+(-0.1,-0.1)$) {Todo};
+
+  % The organizational boundary
+  \draw[fgSubtle, dashed, line width=0.6pt] (5.5,-0.15) -- (5.5,4.3);
+  \node[note, anchor=north] at (5.5,-0.2) {organizational boundary};
+
+  % Linear's GitHub integration needs the client's administrators
+  \draw[->, line width=0.8pt, fgRed, dashed] ($(client.north east)+(-0.7,0)$)
+    .. controls +(0.5,1.15) and +(-0.5,1.15) .. ($(linear.north west)+(0.7,0)$)
+    node[pos=0.5, fill=white, inner sep=2pt, note, text=fgRed] {\textbf{\(\times\)}\enspace
+      Linear's GitHub integration: only if the client connects its organization to your workspace};
+
+  % ferryGL's path, with your own credentials
+  \node[stage, minimum width=2.1cm, minimum height=1.25cm, fill=fgSoft] (ferry) at (7.7,1.1)
+    {\textbf{ferryGL}\\[-1pt]\scriptsize\color{fgMuted}your machine or CI};
+  \draw[readflow] (client.east |- ferry) -- (ferry.west)
+    node[pos=0.5, above, note, fill=white, inner sep=1pt] {read-only queries}
+    node[pos=0.5, below, note, fill=white, inner sep=1pt] {your GitHub token};
+  \draw[writeflow] (ferry.east) -- (linear.west |- ferry)
+    node[pos=0.5, above, note] {issues, links, statuses}
+    node[pos=0.5, below, note] {your Linear API key};
+\end{tikzpicture}

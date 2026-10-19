@@ -1,0 +1,136 @@
+{
+  "scenarios": 2000,
+  "steps": 12,
+  "fault_rate": 0.05,
+  "seed": 20261019,
+  "runs": 74139,
+  "writes": 49178,
+  "events": 55538,
+  "checks": 427136,
+  "safety_checks": 413071,
+  "faults_injected": 2250,
+  "runs_with_failed_writes": 2139,
+  "orphans": 776,
+  "orphans_adopted": 776,
+  "multi_rider_observations": 846,
+  "actions": {
+    "create": 11421,
+    "update": 5734,
+    "link": 1598,
+    "record": 821,
+    "adopt": 412,
+    "skip": 133
+  },
+  "event_counts": {
+    "move_status": 11520,
+    "new_other_pr": 5617,
+    "new_issue": 5614,
+    "new_my_pr": 5364,
+    "mention": 3598,
+    "pr_merge": 3275,
+    "teammate_link": 2514,
+    "issue_close": 2241,
+    "foreign_metadata": 2240,
+    "pr_ready": 2070,
+    "hand_off": 1793,
+    "review_request": 1447,
+    "pr_close": 1365,
+    "review_submit": 1058,
+    "refs_added": 846,
+    "hand_link": 843,
+    "pr_to_draft": 798,
+    "refs_removed": 748,
+    "unassign_issue": 680,
+    "commit_pushed": 581,
+    "assign_issue": 548,
+    "review_withdraw": 353,
+    "issue_reopen": 235,
+    "pr_reopen": 190
+  },
+  "properties": [
+    {
+      "property": "dry_run",
+      "statement": "A run without --apply writes nothing",
+      "checks": 24000,
+      "violations": 0,
+      "example": ""
+    },
+    {
+      "property": "quiescent",
+      "statement": "A rerun with nothing new on GitHub or in Linear writes nothing",
+      "checks": 24000,
+      "violations": 0,
+      "example": ""
+    },
+    {
+      "property": "one_home",
+      "statement": "Each GitHub item has at most one home among the user's Linear issues",
+      "checks": 80923,
+      "violations": 0,
+      "example": ""
+    },
+    {
+      "property": "ownership",
+      "statement": "Every write targets a Linear issue assigned to the user",
+      "checks": 49178,
+      "violations": 0,
+      "example": ""
+    },
+    {
+      "property": "status_source",
+      "statement": "A status moves only with a new recorded GitHub state, or a first-sync close",
+      "checks": 4742,
+      "violations": 0,
+      "example": ""
+    },
+    {
+      "property": "edits_win",
+      "statement": "When only Linear changed, a status the user set stays, bar a first-sync close",
+      "checks": 4098,
+      "violations": 0,
+      "example": ""
+    },
+    {
+      "property": "coverage",
+      "statement": "Every item in scope has a home after a run, unless it was skipped",
+      "checks": 86168,
+      "violations": 0,
+      "example": ""
+    },
+    {
+      "property": "consistent",
+      "statement": "A pull request's home records its current GitHub state and status",
+      "checks": 75204,
+      "violations": 0,
+      "example": ""
+    },
+    {
+      "property": "foreign_metadata",
+      "statement": "Link metadata that isn't ferryGL's survives every update",
+      "checks": 11302,
+      "violations": 0,
+      "example": ""
+    },
+    {
+      "property": "minimal_data",
+      "statement": "No description, other user's login, or title (in comments) reaches Linear",
+      "checks": 49178,
+      "violations": 0,
+      "example": ""
+    },
+    {
+      "property": "recovery",
+      "statement": "After failed writes, one clean run converges without duplicates",
+      "checks": 4278,
+      "violations": 0,
+      "example": ""
+    },
+    {
+      "property": "order_independent",
+      "statement": "The plan doesn't depend on the order of Linear's lookup results",
+      "checks": 14065,
+      "violations": 29,
+      "example": "[('update', 'acme/web#3', 'ENG-5', 'Todo', ('https://github.com/acme/web/issues/3',))] vs []"
+    }
+  ]
+}

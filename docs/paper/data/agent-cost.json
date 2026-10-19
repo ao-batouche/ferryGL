@@ -1,0 +1,115 @@
+{
+  "scenarios": 2000,
+  "steps": 12,
+  "runs": 48000,
+  "fixed_context_tokens": {
+    "lean": 3361,
+    "plausible": 3391,
+    "lean_delegating": 735,
+    "plausible_delegating": 736
+  },
+  "tokenization": {
+    "lean": {
+      "name": "lean (measured maximum)",
+      "payload": 2.93,
+      "text": 4.06,
+      "printed": 3.7
+    },
+    "plausible": {
+      "name": "plausible (measured median)",
+      "payload": 2.81,
+      "text": 4.02,
+      "printed": 3.66
+    }
+  },
+  "instructions_chars": 9686,
+  "tools_chars": 2636,
+  "agents": {
+    "lean / Claude Haiku 5.5": {
+      "tokens_per_run_median": 15301.62918004674,
+      "dollars_per_run_median": 0.001308740063383715,
+      "dollars_total": 66.04183123696734,
+      "quiet_share_of_dollars": 0.46141520672977265,
+      "turns_median": 3.0
+    },
+    "lean / Claude Sonnet 5.5": {
+      "tokens_per_run_median": 15301.62918004674,
+      "dollars_per_run_median": 0.025329875818356058,
+      "dollars_total": 1273.7344705439868,
+      "quiet_share_of_dollars": 0.4630703757009227,
+      "turns_median": 3.0
+    },
+    "lean / Claude Opus 5.5": {
+      "tokens_per_run_median": 15301.62918004674,
+      "dollars_per_run_median": 0.050659751636712116,
+      "dollars_total": 2547.4689410879737,
+      "quiet_share_of_dollars": 0.4630703757009227,
+      "turns_median": 3.0
+    },
+    "plausible / Claude Haiku 5.5": {
+      "tokens_per_run_median": 29583.347497388506,
+      "dollars_per_run_median": 0.0026965624349781347,
+      "dollars_total": 133.78114127960802,
+      "quiet_share_of_dollars": 0.46342778435717646,
+      "turns_median": 5.0
+    },
+    "plausible / Claude Sonnet 5.5": {
+      "tokens_per_run_median": 29583.347497388506,
+      "dollars_per_run_median": 0.052090954328004105,
+      "dollars_total": 2581.2440840164904,
+      "quiet_share_of_dollars": 0.46473158542902365,
+      "turns_median": 5.0
+    },
+    "plausible / Claude Opus 5.5": {
+      "tokens_per_run_median": 29583.347497388506,
+      "dollars_per_run_median": 0.10418190865600821,
+      "dollars_total": 5162.488168032981,
+      "quiet_share_of_dollars": 0.46473158542902365,
+      "turns_median": 5.0
+    },
+    "lean_delegating / Claude Haiku 5.5": {
+      "tokens_per_run_median": 3142.680468645986,
+      "dollars_per_run_median": 0.00039373676541073094,
+      "dollars_total": 19.09630012349887,
+      "quiet_share_of_dollars": 0.49489291900940846,
+      "turns_median": 3.0
+    },
+    "lean_delegating / Claude Sonnet 5.5": {
+      "tokens_per_run_median": 3142.680468645986,
+      "dollars_per_run_median": 0.007713166648914926,
+      "dollars_total": 374.09496244521375,
+      "quiet_share_of_dollars": 0.49488627999856566,
+      "turns_median": 3.0
+    },
+    "lean_delegating / Claude Opus 5.5": {
+      "tokens_per_run_median": 3142.680468645986,
+      "dollars_per_run_median": 0.015426333297829851,
+      "dollars_total": 748.1899248904275,
+      "quiet_share_of_dollars": 0.49488627999856566,
+      "turns_median": 3.0
+    },
+    "plausible_delegating / Claude Haiku 5.5": {
+      "tokens_per_run_median": 5545.472881494169,
+      "dollars_per_run_median": 0.0010979161157328114,
+      "dollars_total": 52.899061238235056,
+      "quiet_share_of_dollars": 0.49813621998563,
+      "turns_median": 3.0
+    },
+    "plausible_delegating / Claude Sonnet 5.5": {
+      "tokens_per_run_median": 5545.472881494169,
+      "dollars_per_run_median": 0.02175658051545551,
+      "dollars_total": 1048.2210462172743,
+      "quiet_share_of_dollars": 0.4981550416419258,
+      "turns_median": 3.0
+    },
+    "plausible_delegating / Claude Opus 5.5": {
+      "tokens_per_run_median": 5545.472881494169,
+      "dollars_per_run_median": 0.04351316103091102,
+      "dollars_total": 2096.4420924345486,
+      "quiet_share_of_dollars": 0.4981550416419258,
+      "turns_median": 3.0
+    }
+  },
+  "items_per_run_median": 3.0,
+  "tool_calls_per_run_median": 12.0
+}

@@ -1,0 +1,39 @@
+% What an AI agent would spend to do ferryGL's job itself, and to delegate it to ferryGL,
+% from data/agent-scaling-wide.csv (evaluation/agent_cost.py). ferryGL itself spends no tokens.
+\begin{tikzpicture}
+  \begin{groupplot}[ferrygl,
+      group style={group size=2 by 1, horizontal sep=1.9cm},
+      width=7.4cm, height=6.0cm,
+      xmode=log, xmin=8, xmax=1000, log ticks with fixed point,
+      xtick={10,25,50,100,200,400,800},
+      xlabel={items in scope},
+    ]
+    \nextgroupplot[ylabel={tokens per run}, ymode=log, ymin=200, ymax=1e8,
+      yticklabel style={/pgf/number format/.cd, fixed, 1000 sep={,}},
+      legend pos=north west]
+    \addplot[fgNavy, mark=square*] table[col sep=comma, x=items, y=tokens_plausible] {data/agent-scaling-wide.csv};
+    \addlegendentry{doing the job itself}
+    \addplot[fgBlue, mark=diamond*, mark size=2pt] table[col sep=comma, x=items, y=tokens_plausible_delegating] {data/agent-scaling-wide.csv};
+    \addlegendentry{delegating to \ferry}
+    \addplot[fgNavy, mark=square*, dashed, forget plot] table[col sep=comma, x=items, y=tokens_lean] {data/agent-scaling-wide.csv};
+    \addplot[fgBlue, mark=diamond*, mark size=2pt, dashed, forget plot] table[col sep=comma, x=items, y=tokens_lean_delegating] {data/agent-scaling-wide.csv};
+    \addlegendimage{fgSubtle, dashed}
+    \addlegendentry{lean assumptions}
+    \node[note, anchor=south east, align=right] at (rel axis cs:0.97,0.03) {\ferry{} alone: 0 tokens};
+
+    \nextgroupplot[ylabel={dollars per month, two runs a workday}, ymode=log, ymin=0.03, ymax=3000,
+      legend pos=north west]
+    \addplot[fgNavy, mark=square*] table[col sep=comma, x=items, y=month_plausible_opus] {data/agent-scaling-wide.csv};
+    \addlegendentry{Opus 5.5}
+    \addplot[fgTeal, mark=*] table[col sep=comma, x=items, y=month_plausible_sonnet] {data/agent-scaling-wide.csv};
+    \addlegendentry{Sonnet 5.5}
+    \addplot[stProgress, mark=triangle*] table[col sep=comma, x=items, y=month_plausible_haiku] {data/agent-scaling-wide.csv};
+    \addlegendentry{Haiku 5.5}
+    \addplot[fgBlue, mark=diamond*, mark size=2pt] table[col sep=comma, x=items, y=month_plausible_delegating_opus] {data/agent-scaling-wide.csv};
+    \addlegendentry{Opus 5.5, delegating}
+    \addplot[fgNavy, dashed, mark=square*, forget plot] table[col sep=comma, x=items, y=month_lean_opus] {data/agent-scaling-wide.csv};
+    \addplot[fgTeal, dashed, mark=*, forget plot] table[col sep=comma, x=items, y=month_lean_sonnet] {data/agent-scaling-wide.csv};
+    \addplot[stProgress, dashed, mark=triangle*, forget plot] table[col sep=comma, x=items, y=month_lean_haiku] {data/agent-scaling-wide.csv};
+    \addplot[fgBlue, dashed, mark=diamond*, mark size=2pt, forget plot] table[col sep=comma, x=items, y=month_lean_delegating_opus] {data/agent-scaling-wide.csv};
+  \end{groupplot}
+\end{tikzpicture}

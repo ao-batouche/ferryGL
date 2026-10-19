@@ -1,0 +1,24 @@
+# ferryGL
+
+> ferryGL is token-free automation: a command-line tool that copies the GitHub issues and pull requests you're part of, one way, into your own Linear workspace, and keeps their status in step with GitHub. It uses only your own GitHub account and Linear API key, and runs no AI model. AI agents can run it instead of syncing by hand: `ferrygl sync` previews the changes, and `ferrygl sync --apply` makes them.
+
+- Install with `pipx install ferrygl`, `uv tool install ferrygl` or `pip install ferrygl`. It needs Python 3.11 or later.
+- It only reads from GitHub, changes only Linear issues assigned to you, and never deletes anything.
+- `ferrygl sync` prints one line per change, then a summary, or `No changes.` Exit statuses: 0 ok, 1 a route or write failed, 2 setup or configuration error (nothing read or written), 130 interrupted.
+
+## Docs
+
+- [Overview](https://oussamabatouche.com/ferryGL/docs/): What ferryGL does, and which page to read
+- [Getting started](https://oussamabatouche.com/ferryGL/docs/getting-started.html): Install, credentials, and a careful first run
+- [AI agents](https://oussamabatouche.com/ferryGL/docs/ai-agents.html): Have an AI agent run ferryGL, and what instructions to give it
+- [Configuration](https://oussamabatouche.com/ferryGL/docs/configuration.html): Every setting in `ferrygl.toml`
+- [Sync rules](https://oussamabatouche.com/ferryGL/docs/sync-rules.html): Which items are synced, how they map to Linear issues, and how statuses move
+- [Commands](https://oussamabatouche.com/ferryGL/docs/commands.html): `check` and `sync`, reading the plan, exit statuses, schedules, troubleshooting
+- [Data and privacy](https://oussamabatouche.com/ferryGL/docs/data-and-privacy.html): What ferryGL reads, writes to Linear, and keeps
+- [Architecture](https://oussamabatouche.com/ferryGL/docs/architecture.html): How a run works inside, request costs, retries and limits
+
+## Optional
+
+- [White paper](https://github.com/ao-batouche/ferryGL/blob/main/docs/paper/ferrygl-white-paper.pdf): Token-free automation, ferryGL's design and safety invariants, and what an AI agent would spend to do the same job itself or by running ferryGL
+- [Source code](https://github.com/ao-batouche/ferryGL)
+- [JSON Schema for ferrygl.toml](https://oussamabatouche.com/ferryGL/ferrygl.schema.json)
