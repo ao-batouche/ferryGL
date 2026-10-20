@@ -147,7 +147,8 @@ NOTES = {  # footnote marks in the paper's tables, by model note
 
 
 def _money(value: float) -> str:
-    if value >= 100:
+    # Whole dollars from $10 up: cents would be false precision in an estimate.
+    if value >= 10:
         return f"\\${value:,.0f}"
     if value >= 1:
         return f"\\${value:,.2f}"
@@ -167,42 +168,37 @@ def latex(results: list[Result], ferrygl_run: float, shape) -> dict[str, str]:
     """The paper's table bodies and macros, written from the results."""
     by = {(r.model.name, r.strategy, r.assumptions): r for r in results}
     runs = SCHEDULES["twice a workday"]
-    run_rows, year_rows = [], []
+    team_year = runs * 12 * 100  # runs a year for a team of 100, the paper's headline case
+    run_rows = []
     provider = None
     for model in MODELS:
         if provider is not None and model.provider != provider:
             run_rows.append("\\midrule")
-            year_rows.append("\\midrule")
         first = model.provider != provider
         provider = model.provider
         label = (model.provider if first else "") + " & " + _name(model)
         mine = by[(model.name, "itself", "plausible")]
         dele = by[(model.name, "delegating", "plausible")]
         lean = by[(model.name, "itself", "lean")]
+        dele_lean = by[(model.name, "delegating", "lean")]
 
         def secs(r: Result) -> str:
             return f"{r.seconds:.0f}" if r.seconds is not None else "---"
 
+        def span(low: Result, high: Result) -> str:
+            return f"{_money(low.dollars * team_year)}--{_money(high.dollars * team_year)}"
+
+        # One row per model: the exact values behind the paper's figure of yearly team costs.
         run_rows.append(
-            f"{label} & \\num{{{mine.tokens:.0f}}} & {_money(lean.dollars)}--{_money(mine.dollars)}"
-            f" & {_money(dele.dollars)} & {secs(mine)} & {secs(dele)} \\\\"
+            f"{label} & \\num{{{mine.tokens:.0f}}} & {span(lean, mine)} & {span(dele_lean, dele)}"
+            f" & {secs(mine)} & {secs(dele)} \\\\"
         )
-        cells = [_money(mine.dollars * runs * 12 * users) for users in TEAMS]
-        cells += [_money(dele.dollars * runs * 12 * users) for users in TEAMS]
-        year_rows.append(f"{label} & " + " & ".join(cells) + " \\\\")
-    alone = (
-        f"\\multicolumn{{2}}{{@{{}}l}}{{\\ferry{{}} alone}} & 0 & \\$0 & & {ferrygl_run:.0f} & \\\\"
-    )
-    run_rows += ["\\midrule", alone]
-    actions = [_money(ACTIONS_MINUTE_PRICE * runs * 12 * users) for users in TEAMS]
-    year_rows += [
+    actions_team = _money(ACTIONS_MINUTE_PRICE * team_year)
+    run_rows += [
         "\\midrule",
-        "\\multicolumn{2}{@{}l}{\\ferry{} alone, own machine} & "
-        + " & ".join(["\\$0"] * len(TEAMS))
-        + " & \\multicolumn{4}{c}{} \\\\",
-        "\\multicolumn{2}{@{}l}{\\ferry{} alone, paid Actions minutes} & "
-        + " & ".join(actions)
-        + " & \\multicolumn{4}{c}{} \\\\",
+        # Note e: nothing on users' own machines, the upper figure on paid Actions minutes.
+        f"\\multicolumn{{2}}{{@{{}}l}}{{\\ferry{{}} alone}} & 0 & "
+        f"\\$0--{actions_team}\\textsuperscript{{e}} & & {ferrygl_run:.0f} & \\\\",
     ]
 
     def yearly(strategy: str, assumptions: str) -> list[float]:
@@ -211,11 +207,15 @@ def latex(results: list[Result], ferrygl_run: float, shape) -> dict[str, str]:
     timed = [r for r in results if r.seconds is not None and r.assumptions == "plausible"]
     mine_times = [r.seconds for r in timed if r.strategy == "itself"]
     dele_times = [r.seconds for r in timed if r.strategy == "delegating"]
-    ratios = [
-        by[(m.name, "itself", a)].dollars / by[(m.name, "delegating", a)].dollars
-        for m in MODELS
-        for a in ("lean", "plausible")
-    ]
+
+    def saves(assumptions: str) -> list[float]:
+        return [
+            by[(m.name, "itself", assumptions)].dollars
+            / by[(m.name, "delegating", assumptions)].dollars
+            for m in MODELS
+        ]
+
+    ratios = saves("lean") + saves("plausible")
     providers: dict[str, list[float]] = {}
     for m in MODELS:
         providers.setdefault(m.provider, []).append(by[(m.name, "itself", "plausible")].dollars)
@@ -237,8 +237,12 @@ def latex(results: list[Result], ferrygl_run: float, shape) -> dict[str, str]:
         "CmpItselfLeanHundredMax": _money(max(yearly("itself", "lean"))),
         "CmpDelegatingHundredMin": _money(min(yearly("delegating", "plausible"))),
         "CmpDelegatingHundredMax": _money(max(yearly("delegating", "plausible"))),
-        "CmpSavesMin": f"{min(ratios):.0f}",
+        "CmpDelegatingLeanHundredMin": _money(min(yearly("delegating", "lean"))),
+        "CmpDelegatingLeanHundredMax": _money(max(yearly("delegating", "lean"))),
+        "CmpSavesMin": f"{min(ratios):.0f}",  # over both sets of assumptions
         "CmpSavesMax": f"{max(ratios):.0f}",
+        "CmpSavesPlausibleMin": f"{min(saves('plausible')):.0f}",
+        "CmpSavesPlausibleMax": f"{max(saves('plausible')):.0f}",
         "CmpTokensYearMin": f"{min(tokens_year) / 1e9:.1f}",
         "CmpTokensYearMax": f"{max(tokens_year) / 1e9:.1f}",
         "CmpItselfSecondsMin": f"{min(mine_times):.0f}",
@@ -279,7 +283,6 @@ def latex(results: list[Result], ferrygl_run: float, shape) -> dict[str, str]:
             for name, rows in (
                 ("CmpTokenizerRows", token_rows),
                 ("CmpRunRows", run_rows),
-                ("CmpYearRows", year_rows),
             )
         ),
         "models-macros.tex": "".join(f"\\newcommand{{\\{k}}}{{{v}}}\n" for k, v in macros.items()),
@@ -296,6 +299,7 @@ def figure_rows(results: list[Result]) -> list[dict[str, Any]]:
             "itself": round(by[(m.name, "itself", "plausible")].dollars * runs, 2),
             "itself_lean": round(by[(m.name, "itself", "lean")].dollars * runs, 2),
             "delegating": round(by[(m.name, "delegating", "plausible")].dollars * runs, 2),
+            "delegating_lean": round(by[(m.name, "delegating", "lean")].dollars * runs, 2),
         }
         for m in MODELS
     ]

@@ -6,22 +6,23 @@
       width=7.6cm, height=5.4cm,
       xmin=0, xmax=1600, xtick={0,400,800,1200,1600},
       xlabel={other people's pull requests in scope},
-      every axis plot/.append style={mark size=1.1pt},
+      % The samples are dense below 200, so the lines carry no marks.
+      every axis plot/.append style={mark=none},
     ]
     \nextgroupplot[ylabel={GraphQL requests}, ymin=0, ymax=60,
       legend to name=costlegend, legend columns=2,
       legend style={/tikz/every even column/.append style={column sep=1.2em}}]
-    \addplot[fgTeal, mark=*] table[col sep=comma, x=others, y=requests_scan] {data/github-cost.csv};
+    \addplot[fgTeal] table[col sep=comma, x=others, y=requests_scan] {data/github-cost.csv};
     \addlegendentry{every role (default)}
-    \addplot[fgNavy, mark=square*, dashed] table[col sep=comma, x=others, y=requests_noscan] {data/github-cost.csv};
+    \addplot[fgNavy, dashed] table[col sep=comma, x=others, y=requests_noscan] {data/github-cost.csv};
     \addlegendentry{every role but \texttt{prs\_with\_commits}}
     \draw[fgRed, dotted, line width=0.9pt] (axis cs:1000,0) -- (axis cs:1000,60);
     \node[note, text=fgRed, anchor=north east, align=right] at (axis cs:980,30) {GitHub stops\\at 1,000 results};
 
     \nextgroupplot[ylabel={rate-limit points}, ymode=log, ymin=1, ymax=20000,
       log ticks with fixed point]
-    \addplot[fgTeal, mark=*] table[col sep=comma, x=others, y=points_scan] {data/github-cost.csv};
-    \addplot[fgNavy, mark=square*, dashed] table[col sep=comma, x=others, y=points_noscan] {data/github-cost.csv};
+    \addplot[fgTeal] table[col sep=comma, x=others, y=points_scan] {data/github-cost.csv};
+    \addplot[fgNavy, dashed] table[col sep=comma, x=others, y=points_noscan] {data/github-cost.csv};
     \draw[fgMuted, dashed, line width=0.7pt] (axis cs:0,5000) -- (axis cs:1600,5000);
     \node[note, anchor=south west] at (axis cs:30,5000) {a user's limit per hour};
     \draw[fgRed, dotted, line width=0.9pt] (axis cs:1000,1) -- (axis cs:1000,20000);
