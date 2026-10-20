@@ -46,7 +46,7 @@ $ uv run python docs/paper/evaluation/compare_models.py
 this version, the order-independence check does (see section 6.1 of the paper). Planner
 timings depend on the machine. `count_tokens.py` downloads public tokenizers from
 Hugging Face. `agent_cost.py` and `compare_models.py` call no model: they measure what an agent
-would read and send, and price it under the assumptions stated in sections 7.4 and 7.5 of the
+would read and send, and price it under the assumptions stated in sections 6.4 and 6.5 of the
 paper. Prices, speeds and their sources, read on 2026-10-19, are in `evaluation/models.py`;
 edit them and rerun to update the comparison.
 
