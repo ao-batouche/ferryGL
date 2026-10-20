@@ -1,29 +1,56 @@
 % Yearly cost of an AI agent for a team of 100, two runs a workday, by model, from
-% data/models-figure.csv (evaluation/compare_models.py). ferryGL alone spends no tokens.
+% data/models-figure.csv (evaluation/compare_models.py). Each bar spans the lean to the
+% plausible assumptions, and its mark is the plausible estimate. ferryGL alone spends no tokens.
 \pgfplotstableread[col sep=comma]{data/models-figure.csv}\modelstable
+\pgfplotstablegetrowsof{\modelstable}
+\pgfmathtruncatemacro{\modelslast}{\pgfplotsretval-1}
+\pgfmathsetmacro{\modelsymax}{\modelslast+0.8}
 \begin{tikzpicture}
   \begin{axis}[ferrygl,
-      xbar, xmode=log, log origin=infty, log ticks with fixed point,
-      width=12.8cm, height=15.5cm,
-      xmin=20, xmax=200000,
+      xmode=log, log ticks with fixed point,
+      width=12.6cm, height=11.6cm,
+      xmin=12, xmax=120000,
       xlabel={dollars per year for a team of 100, two runs a workday},
-      ytick=data, y dir=reverse,
+      ytick={0,...,\modelslast}, y dir=reverse,
+      ymin=-0.8, ymax=\modelsymax,
       yticklabels from table={\modelstable}{label},
       yticklabel style={font=\sffamily\scriptsize},
-      bar width=3.2pt, enlarge y limits=0.025,
-      legend columns=2, legend style={at={(0.5,1.015)}, anchor=south, draw=none, fill=none,
-        /tikz/every even column/.append style={column sep=1em},
-        nodes={font=\sffamily\scriptsize, text=fgNavy}},
-      legend cell align=left,
+      xtick pos=bottom, ytick pos=left, ytick style={draw=none},
+      xmajorgrids, major grid style={fgBorder, line width=0.4pt},
+      % The cheapest models are at the top, so the top right corner is empty.
+      legend style={at={(0.985,0.985)}, anchor=north east, fill=white, inner sep=4pt,
+        row sep=2pt},
+      range/.style={line width=3.2pt, line cap=butt},
     ]
-    \addplot[draw=none, fill=fgNavy] table[x=itself, y expr=\coordindex] {\modelstable};
-    \addlegendentry{agent doing the job itself (plausible)}
-    \addplot[draw=none, fill=fgSubtle!70] table[x=itself_lean, y expr=\coordindex] {\modelstable};
-    \addlegendentry{agent doing the job itself (lean)}
-    \addplot[draw=none, fill=fgBlue!80] table[x=delegating, y expr=\coordindex] {\modelstable};
-    \addlegendentry{agent delegating to \ferry{} (plausible)}
-    \draw[fgRed, dashed, line width=0.8pt] (axis cs:\CmpActionsHundredYearValue,-1) -- (axis cs:\CmpActionsHundredYearValue,24);
-    \addlegendimage{fgRed, dashed, line width=0.8pt}
-    \addlegendentry{\ferry{} alone, paid GitHub Actions minutes (\$0 on own machines)}
+    % Light row guides, then each strategy's range from the lean to the plausible assumptions.
+    \pgfplotsinvokeforeach{0,...,\modelslast}{
+      \pgfplotstablegetelem{#1}{itself_lean}\of\modelstable \let\itselflo\pgfplotsretval
+      \pgfplotstablegetelem{#1}{itself}\of\modelstable \let\itselfhi\pgfplotsretval
+      \pgfplotstablegetelem{#1}{delegating_lean}\of\modelstable \let\delelo\pgfplotsretval
+      \pgfplotstablegetelem{#1}{delegating}\of\modelstable \let\delehi\pgfplotsretval
+      \edef\rangeplots{%
+        \noexpand\addplot[fgBorder!60, line width=0.3pt, forget plot]
+          coordinates {(\delelo,#1) (\itselfhi,#1)};
+        \noexpand\addplot[range, fgNavy!45, forget plot]
+          coordinates {(\itselflo,#1) (\itselfhi,#1)};
+        \noexpand\addplot[range, fgBlue!40, forget plot]
+          coordinates {(\delelo,#1) (\delehi,#1)};
+      }\rangeplots
+    }
+    \addplot[only marks, mark=*, mark size=2pt, fgNavy,
+      legend image code/.code={
+        \draw[fgNavy!45, line width=3.2pt] (0cm,0cm) -- (0.5cm,0cm);
+        \draw[mark=*, mark size=2pt, fgNavy] plot coordinates {(0.5cm,0cm)};}]
+      table[x=itself, y expr=\coordindex] {\modelstable};
+    \addlegendentry{agent doing the job itself}
+    \addplot[only marks, mark=diamond*, mark size=2.6pt, fgBlue,
+      legend image code/.code={
+        \draw[fgBlue!40, line width=3.2pt] (0cm,0cm) -- (0.5cm,0cm);
+        \draw[mark=diamond*, mark size=2.6pt, fgBlue] plot coordinates {(0.5cm,0cm)};}]
+      table[x=delegating, y expr=\coordindex] {\modelstable};
+    \addlegendentry{agent delegating to \ferry}
+    \addplot[fgRed, dashed, line width=0.8pt]
+      coordinates {(\CmpActionsHundredYearValue,-0.8) (\CmpActionsHundredYearValue,\modelsymax)};
+    \addlegendentry{\ferry{} alone on paid Actions minutes}
   \end{axis}
 \end{tikzpicture}

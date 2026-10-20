@@ -18,7 +18,9 @@
 
 \tikzset{
   >={Stealth[length=2.2mm]},
-  every node/.style={font=\sffamily\small, text=fgNavy},
+  % No hyphenation inside figures: notes with a text width break between words only.
+  every node/.style={font=\sffamily\small, text=fgNavy,
+    execute at begin node={\hyphenpenalty=10000\exhyphenpenalty=10000\relax}},
   box/.style={draw=fgBorder, fill=white, rounded corners=2pt, line width=0.6pt,
     inner sep=4pt, align=center},
   region/.style={draw=fgBorder, fill=fgSoft, rounded corners=4pt, line width=0.6pt},

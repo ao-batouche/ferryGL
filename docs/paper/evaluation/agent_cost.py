@@ -803,6 +803,10 @@ def latex(summary: dict[str, Any], rows: list[dict[str, Any]]) -> str:
             continue
         if row["run"] != "changed" or row["items"] not in (25, 100, 400, 800):
             continue
+        if "Opus" in row["model"] and row["items"] in (100, 800):
+            # The longest prompt of the run, which a model's context window must hold.
+            peak = f"\\num{{{row['peak_prompt_tokens']}}}"
+            define(f"Peak{camel(row['agent'])}{_words(row['items'])}", peak)
         name = f"{camel(row['agent'])}{row['model'].split()[-2]}{_words(row['items'])}"
         define(f"Run{name}", _dollars(row["dollars"]))
         define(f"Tok{name}", f"\\num{{{row['input_tokens'] + row['output_tokens']}}}")
