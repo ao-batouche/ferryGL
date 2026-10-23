@@ -86,10 +86,10 @@ afterwards. In each table, the first row that matches wins.
 
 | On GitHub | Linear status |
 |---|---|
-| Closed as completed | Done |
+| Closed as completed, or with no reason | Done |
 | Closed as not planned or duplicate | Canceled |
 | Open, and a linked pull request is open and ready for review | In Review |
-| Open, and every open linked pull request is a draft | In Progress |
+| Open, with open linked pull requests, all of them drafts | In Progress |
 | Open, and a linked pull request merged, none open | Unchanged (In Review for a new Linear issue) |
 | Open | Todo |
 
@@ -115,7 +115,9 @@ afterwards. In each table, the first row that matches wins.
 
 The review rows need their [roles](configuration.md#roles) on. With `review_requests = false`,
 a new request doesn't move a pull request back to Todo. With `prs_reviewed = false`, a pull
-request you reviewed follows the Draft and Open rows.
+request you reviewed follows the Draft and Open rows. If only the review request brought it
+into your scope, it leaves your scope once you review it, and its Linear issue stays as it
+is.
 
 ## Your edits win
 
