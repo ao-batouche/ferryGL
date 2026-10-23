@@ -35,9 +35,11 @@ Don't break these without an explicit decision from the project owner.
    and the user's role reach Linear. Descriptions are copied only when `[copy] description`
    is on. Never copy comments or other people's names. ferryGL's own comments
    (`[sync] comment`, off by default) name only GitHub items, states and status names.
-8. **No surprise writes.** `ferrygl sync` without `--apply` must write nothing. A setup
-   problem (missing team, project, state or label) stops the run before GitHub is read or
-   Linear is written.
+8. **No surprise writes.** `ferrygl sync` without `--apply`, and `ferrygl watch --preview`,
+   must write nothing to Linear. `ferrygl watch` makes changes by default, by the project owner's
+   decision: it's for keeping Linear in step unattended, after a preview with `sync`. A
+   setup problem (missing team, project, state or label) stops the run before GitHub is read
+   or Linear is written.
 
 ## Retained data and public contracts
 
@@ -67,21 +69,28 @@ Users' Linear workspaces keep what ferryGL writes, so treat these as compatibili
   error or warning, for at least one release. Describe each key in `site/ferrygl.schema.json`
   too; `tests/test_schema.py` fails until it matches. Users point their editors at that file's
   URL, https://oussamabatouche.com/ferryGL/ferrygl.schema.json, so don't move it.
-- **CLI:** commands `check` and `sync [--apply]`, `--config`, `FERRYGL_CONFIG`, the default
-  path `$XDG_CONFIG_HOME/ferrygl/ferrygl.toml` (else `~/.config/ferrygl/ferrygl.toml`),
-  `LINEAR_API_KEY`, `GH_TOKEN` and `GITHUB_TOKEN`, and exit statuses 0 (ok), 1 (a route or
-  write failed), 2 (setup or config error) and 130 (interrupted).
+- **CLI:** commands `check`, `sync [--apply]`, `watch [--preview] [--interval SECONDS] [--bg]`
+  and `watch --list | --stop [ID | all] | --log [ID]`, `--config`, `FERRYGL_CONFIG`, the
+  default path `$XDG_CONFIG_HOME/ferrygl/ferrygl.toml` (else `~/.config/ferrygl/ferrygl.toml`),
+  the state directory `$XDG_STATE_HOME/ferrygl` (else `~/.local/state/ferrygl`) with a `.lock`
+  and a `.log` per config file, `LINEAR_API_KEY`, `GH_TOKEN` and `GITHUB_TOKEN`, and exit
+  statuses 0 (ok, or a watch stopped when asked), 1 (a route, write or GitHub check failed,
+  or no such watch or log), 2 (setup or config error, a watch of that config already running,
+  or an option this platform lacks) and 130 (interrupted).
 
 ## Layout
 
 | Path | Responsibility |
 |---|---|
-| `src/ferrygl/cli.py` | The `ferrygl` command: arguments, the Linear API key, exit statuses |
+| `src/ferrygl/cli.py` | The `ferrygl` command: arguments, the Linear API key, exit statuses, starting and managing watches |
+| `src/ferrygl/__main__.py` | `python -m ferrygl`, which `--bg` uses to start a watch |
 | `src/ferrygl/config.py` | Parse and validate `ferrygl.toml` into frozen dataclasses |
-| `src/ferrygl/github.py` | Resolve tokens, run one GitHub search per role, scan commit authors, parse items |
+| `src/ferrygl/github.py` | Resolve tokens, run one GitHub search per role, scan commit authors, parse items, the watch's check |
 | `src/ferrygl/linear.py` | Linear GraphQL reads and writes with a personal API key |
 | `src/ferrygl/plan.py` | Pure planning: GitHub items + existing Linear state -> changes |
 | `src/ferrygl/sync.py` | `check` and `sync`: resolve routes, plan, print, apply |
+| `src/ferrygl/watch.py` | `watch`: check GitHub at an interval, sync the routes that changed, stop between syncs |
+| `src/ferrygl/jobs.py` | Running watches: one per config file, `--bg`, `--list`, `--stop`, `--log` |
 | `src/ferrygl/model.py` | Shared types: `Kind`, `Role`, `GitHubItem`, `LinearIssue`, `Attachment`, `Change` |
 | `src/ferrygl/_http.py` | JSON POST with retries for both clients |
 | `tests/builders.py` | Builders for synthetic items, Linear issues and links |
@@ -120,9 +129,10 @@ $ uv run ruff check && uv run ruff format --check
 - Check new or changed Linear queries against Linear's published schema
   (`packages/sdk/src/schema.graphql` in `linear/linear` on GitHub) for field names, argument
   names and types such as `String!` vs `ID!`.
-- Live checks: run read-only commands (`ferrygl check`, `ferrygl sync` without `--apply`)
-  against a real workspace only with its owner's credentials and permission. Never run
-  `--apply` against a workspace unless its owner asks for that specific run.
+- Live checks: run read-only commands (`ferrygl check`, `ferrygl sync` without `--apply`,
+  `ferrygl watch --preview`) against a real workspace only with its owner's credentials and
+  permission. Never run `ferrygl sync --apply`, or `ferrygl watch` without `--preview`,
+  against a workspace unless its owner asks for that specific run.
 
 ## Documentation
 
@@ -139,10 +149,10 @@ The README stays short: what ferryGL does, how it works, and a quick start. Deta
 | `docs/getting-started.md` | Install, credentials, first run |
 | `docs/configuration.md` | Every config key and its default, and editor setup for the schema |
 | `docs/sync-rules.md` | Roles, homes, riding pull requests, status rules, adoption |
-| `docs/commands.md` | `check`, `sync`, plan actions, exit statuses, scheduling, VS Code tasks, errors |
+| `docs/commands.md` | `check`, `sync`, `watch` and background watches, plan actions, exit statuses, scheduling, VS Code tasks, errors |
 | `docs/ai-agents.md` | Having an AI agent run ferryGL: why, setup, instructions, what it reads |
 | `docs/data-and-privacy.md` | What is read, written to Linear, and kept; link metadata |
-| `docs/architecture.md` | Run steps, state keys, request costs, retries, limits |
+| `docs/architecture.md` | Run steps, state keys, watching, running watches, request costs, retries, limits |
 
 The website (https://oussamabatouche.com/ferryGL/) is rebuilt from `docs/` whenever `docs/`
 or `site/` changes on `main`, so a page changed in `docs/` needs no other edit. A new page
@@ -205,4 +215,14 @@ version rather than trying to replace it.
 - Finding pull requests with the user's commits scans every pull request in scope, because
   GitHub search has no commit-author qualifier for pull requests. Keep that scan bounded by
   `since`, and watch its cost when changing it.
+- `ferrygl watch` is implemented and tested with fakes, and its GitHub check has been run
+  against a real repository. It syncs a route on any change in its repositories, so it
+  multiplies the cost of runs: keep its rate-limit reserve (`RESERVE` in `watch.py`) when
+  changing it. Its lock keeps two watches of a config file from running at once; keep it,
+  since two runs can create the same Linear issue twice (`sync --apply` takes no lock). A
+  watch stops only between syncs, so that no change is left half made. `--bg`, `--list`,
+  `--stop` and `--log` work on Linux and macOS. `--stop` and `--list` are tested with real
+  child processes, `--bg` with a fake `Popen`. Every command has also been run end to end
+  against local stand-ins for the GitHub and Linear APIs, but not against a real Linear
+  workspace.
 - Open question: whether comments or mentions should count as roles.

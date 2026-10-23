@@ -199,7 +199,7 @@ acme/api#348  involved  adopt   -&gt; ENG-9
       <div class="section-head">
         <p class="eyebrow">How it works</p>
         <h2>A command you run, not a service you host</h2>
-        <p>Run ferryGL by hand or on a schedule. It has no server and no database.</p>
+        <p>Run ferryGL by hand, on a schedule, or with <code>ferrygl watch</code>, which syncs whenever your repositories change. It has no server and no database.</p>
       </div>
 
       <div class="flow" aria-label="GitHub is read by ferryGL, which writes to your Linear workspace">
@@ -212,7 +212,7 @@ acme/api#348  involved  adopt   -&gt; ENG-9
         <div class="card flow-node is-center">
           <div class="flow-logo"><img src="./assets/icon-256.png" alt="" width="48" height="48"></div>
           <h3>ferryGL</h3>
-          <p>Plans the changes on your machine, and shows them before making them</p>
+          <p>Plans the changes on your machine, and prints each one</p>
         </div>
         <div class="flow-link" aria-hidden="true"><span>writes</span></div>
         <div class="card flow-node">
@@ -237,7 +237,7 @@ acme/api#348  involved  adopt   -&gt; ENG-9
         </li>
         <li class="card">
           <h3>Apply</h3>
-          <p>With <code>--apply</code>, it makes those changes in Linear. Without it, nothing is written.</p>
+          <p><code>ferrygl sync --apply</code> makes those changes in Linear, and so does <code>ferrygl watch</code> unless you add <code>--preview</code>. <code>ferrygl sync</code> alone writes nothing.</p>
         </li>
       </ol>
 
@@ -261,7 +261,7 @@ acme/api#348  involved  adopt   -&gt; ENG-9
         <div class="card feature">
           <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></div>
           <h3>Preview first</h3>
-          <p><code>ferrygl sync</code> only shows what it would do. <code>ferrygl sync --apply</code> does it.</p>
+          <p><code>ferrygl sync</code> only shows what it would do. <code>ferrygl sync --apply</code> does it. <code>ferrygl watch</code> makes changes as they come, unless you add <code>--preview</code>, so preview with <code>ferrygl sync</code> before you start it.</p>
         </div>
         <div class="card feature">
           <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
@@ -324,7 +324,7 @@ acme/api#348  involved  adopt   -&gt; ENG-9
         </li>
         <li class="card qs-step">
           <h3>Check, preview, then apply</h3>
-          <p><code>check</code> confirms your credentials, repositories and Linear setup. <code>sync</code> shows the plan. Nothing is written to Linear until you add <code>--apply</code>.</p>
+          <p><code>check</code> confirms your credentials, repositories and Linear setup. <code>sync</code> shows the plan. Nothing is written to Linear until you run <code>ferrygl sync --apply</code>. To keep Linear in step from then on, leave <code>ferrygl watch</code> running, or add <code>--bg</code> (Linux and macOS) to run it in the background. It checks GitHub every minute by default, and makes the changes as they come; add <code>--preview</code> to only show them. <code>ferrygl watch --list</code> shows the watches running, and <code>ferrygl watch --stop</code> stops one.</p>
           <div class="code-block"><pre><span class="c-prompt">$ </span>ferrygl check
 <span class="c-prompt">$ </span>ferrygl sync
 <span class="c-prompt">$ </span>ferrygl sync --apply</pre></div>
@@ -361,7 +361,7 @@ acme/api#348  involved  adopt   -&gt; ENG-9
         </a>
         <a class="card doc-card" href="./docs/commands.html">
           <h3>Commands<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></h3>
-          <p>Reading the plan, exit statuses, running on a schedule or from VS Code, and fixing errors.</p>
+          <p>Reading the plan, exit statuses, watching for changes, in a terminal or the background, running on a schedule or from VS Code, and fixing errors.</p>
         </a>
         <a class="card doc-card" href="./docs/data-and-privacy.html">
           <h3>Data and privacy<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></h3>
@@ -381,7 +381,7 @@ acme/api#348  involved  adopt   -&gt; ENG-9
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg><span>Write anything to GitHub.</span></li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg><span>Sync both ways, or keep descriptions and comments in sync.</span></li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg><span>React instantly. There are no webhooks: Linear catches up each time ferryGL runs.</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg><span>React instantly. Webhooks would need admin access to the repository, so ferryGL polls: Linear catches up each time it runs, or within a minute or two with <code>ferrygl watch</code>.</span></li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg><span>Sync every issue in a repository for a whole team. Linear's GitHub integration does that when you can install it.</span></li>
         </ul>
       </div>

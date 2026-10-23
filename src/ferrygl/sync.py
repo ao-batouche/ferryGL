@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Collection, Sequence
 from dataclasses import dataclass, field
 from typing import TextIO
 
@@ -115,6 +115,35 @@ def run_check(
     return EXIT_OK if ok else EXIT_FAILED
 
 
+def resolve_setup(
+    config: Config,
+    linear: LinearClient,
+    err: TextIO,
+    routes: Collection[int] | None = None,
+) -> tuple[str, list[RouteTarget], dict[str, dict[str, State]]] | None:
+    """The Linear user ferryGL acts for, the routes' targets and their teams' states, for
+    every route or those numbered in ``routes``. None, with the problems printed, if
+    Linear can't be read or a team, project, state or label is missing."""
+    states: dict[str, dict[str, State]] = {}
+    try:
+        viewer_id, _ = linear.viewer()
+        targets = [
+            resolve_target(n, route, config, linear, states)
+            for n, route in enumerate(config.routes, 1)
+            if routes is None or n in routes
+        ]
+    except LinearError as exc:
+        print(f"error: {exc}", file=err)
+        return None
+    problems = [f"route {t.number}: {p}" for t in targets for p in t.problems]
+    if problems:
+        for problem in problems:
+            print(f"error: {problem}", file=err)
+        print("Nothing changed. Run `ferrygl check` for details.", file=err)
+        return None
+    return viewer_id, targets, states
+
+
 def run_sync(
     config: Config,
     *,
@@ -124,24 +153,15 @@ def run_sync(
     out: TextIO,
     err: TextIO,
     now: str,
+    routes: Collection[int] | None = None,
+    hint: str = "Run with --apply to make them.",
 ) -> int:
-    """Plan every route and print the changes; with ``apply``, make them in Linear."""
-    states: dict[str, dict[str, State]] = {}
-    try:
-        viewer_id, _ = linear.viewer()
-        targets = [
-            resolve_target(n, route, config, linear, states)
-            for n, route in enumerate(config.routes, 1)
-        ]
-    except LinearError as exc:
-        print(f"error: {exc}", file=err)
+    """Plan every route, or only those numbered in ``routes``, and print the changes; with
+    ``apply``, make them in Linear. Without it, the summary ends with ``hint``."""
+    setup = resolve_setup(config, linear, err, routes)
+    if setup is None:
         return EXIT_SETUP
-    problems = [f"route {t.number}: {p}" for t in targets for p in t.problems]
-    if problems:
-        for problem in problems:
-            print(f"error: {problem}", file=err)
-        print("Nothing changed. Run `ferrygl check` for details.", file=err)
-        return EXIT_SETUP
+    viewer_id, targets, states = setup
 
     failures = 0
     counts: Counter[str] = Counter()
@@ -157,7 +177,7 @@ def run_sync(
         if apply:
             failures += _apply_all(changes, target, viewer_id, linear, states, out, err)
 
-    _print_summary(counts, apply, failures, out)
+    _print_summary(counts, apply, failures, out, hint)
     return EXIT_FAILED if failures else EXIT_OK
 
 
@@ -302,7 +322,9 @@ def _print_changes(changes: Sequence[Change], out: TextIO) -> None:
             print(f"{'':<{width}}  comment: {change.comment}", file=out)
 
 
-def _print_summary(counts: Counter[str], applied: bool, failures: int, out: TextIO) -> None:
+def _print_summary(
+    counts: Counter[str], applied: bool, failures: int, out: TextIO, hint: str
+) -> None:
     total = sum(counts.values())
     if total == 0:
         print("No changes.", file=out)
@@ -311,7 +333,7 @@ def _print_summary(counts: Counter[str], applied: bool, failures: int, out: Text
     parts = ", ".join(f"{counts[a]} {a}" for a in order if counts[a])
     noun = "change" if total == 1 else "changes"
     if not applied:
-        print(f"{total} {noun} ({parts}). Run with --apply to make them.", file=out)
+        print(f"{total} {noun} ({parts}). {hint}", file=out)
     elif failures:
         print(f"{total} {noun} ({parts}); {failures} failed, see the errors above.", file=out)
     else:

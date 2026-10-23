@@ -176,7 +176,7 @@
           "default": "In Progress"
         },
         "in_review": {
-          "description": "For open pull requests, ones you've reviewed, and issues with a pull request open for review.",
+          "description": "For open pull requests, ones you've reviewed, and issues with a pull request open for review. A new Linear issue for an open issue whose pull request was merged starts here too.",
           "type": "string",
           "pattern": "\\S",
           "default": "In Review"

@@ -5,6 +5,7 @@
 - Install with `pipx install ferrygl`, `uv tool install ferrygl` or `pip install ferrygl`. It needs Python 3.11 or later.
 - It only reads from GitHub, changes only Linear issues assigned to you, and never deletes anything.
 - `ferrygl sync` prints one line per change, then a summary, or `No changes.` Exit statuses: 0 ok, 1 a route or write failed, 2 setup or configuration error (nothing read or written), 130 interrupted.
+- `ferrygl watch [--preview]` syncs every route, then checks GitHub every minute by default (`--interval SECONDS`, at least 30) and syncs a route again whenever its repositories change. Unlike `sync`, it makes the changes in Linear by default; `--preview` only shows them. Agents shouldn't start it without the user asking. It runs until interrupted, or in the background with `--bg` (Linux and macOS), which prints the watch's ID and logs to a file in `$XDG_STATE_HOME/ferrygl`, else `~/.local/state/ferrygl`. `ferrygl watch --list` shows the watches running with their IDs, `ferrygl watch --stop [ID | all]` stops one after its current sync, and `ferrygl watch --log [ID]` shows the end of a background watch's log. Without an ID, `--stop` and `--log` act on the watch of the config file in use.
 
 ## Docs
 
@@ -13,7 +14,7 @@
 - [AI agents](https://oussamabatouche.com/ferryGL/docs/ai-agents.html): Have an AI agent run ferryGL, and what instructions to give it
 - [Configuration](https://oussamabatouche.com/ferryGL/docs/configuration.html): Every setting in `ferrygl.toml`
 - [Sync rules](https://oussamabatouche.com/ferryGL/docs/sync-rules.html): Which items are synced, how they map to Linear issues, and how statuses move
-- [Commands](https://oussamabatouche.com/ferryGL/docs/commands.html): `check` and `sync`, reading the plan, exit statuses, schedules, troubleshooting
+- [Commands](https://oussamabatouche.com/ferryGL/docs/commands.html): `check`, `sync` and `watch`, background watches, reading the plan, exit statuses, schedules, troubleshooting
 - [Data and privacy](https://oussamabatouche.com/ferryGL/docs/data-and-privacy.html): What ferryGL reads, writes to Linear, and keeps
 - [Architecture](https://oussamabatouche.com/ferryGL/docs/architecture.html): How a run works inside, request costs, retries and limits
 

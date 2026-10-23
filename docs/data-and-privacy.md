@@ -25,6 +25,11 @@ authors of its first 100 commits. It then drops the pull requests without a comm
 ferryGL reads descriptions to find the issues a pull request refers to, even when it doesn't
 copy them.
 
+[`ferrygl watch`](commands.md#ferrygl-watch) also reads, at each check, the URLs and update
+times of the 20 most recently updated issues and pull requests in each route's repositories,
+whoever updated them, and how much of your GitHub rate limit is left. It uses them only to
+tell whether anything changed, and copies none of them to Linear.
+
 ## What it reads from Linear
 
 - Your user ID and name, and each route's team, workflow states, project and label.
@@ -106,7 +111,21 @@ configure.
 
 ## What it keeps on your machine
 
-Nothing. ferryGL has no database, cache or log file of its own: everything it needs to
-remember is in the Linear links. Its output goes to the terminal, or wherever you redirect it.
+Almost nothing. ferryGL has no database or cache: everything it needs to remember is in the
+Linear links. While `ferrygl watch` runs, it keeps each route's last check in memory, and
+forgets it when it stops.
+
+`watch` keeps two files per config file in `$XDG_STATE_HOME/ferrygl`, or
+`~/.local/state/ferrygl`, named after the config file, such as `watch-ferrygl-bf1e20bc`. The
+folder and the files are created readable by you alone.
+
+- A `.lock` file, so that only one watch of the config file runs at a time, and so that
+  `ferrygl watch --list` can show it. It holds the last watch's process ID, config file path,
+  options and start time, and with `--bg`, the path of its log.
+- With `--bg`, a `.log` file, the background watch's output. It isn't rotated or deleted, so
+  delete it yourself when you no longer need it.
+
+Otherwise, ferryGL's output goes to the terminal, or wherever you redirect it.
 The output names GitHub items and the titles of the Linear issues it would create, so a log
-file you keep, as in the [cron example](commands.md#cron), holds them too.
+file you keep, as in the [cron example](commands.md#cron), holds them too, as do the `.log`
+files of `--bg` and, when `watch` runs [as a service](commands.md#as-a-systemd-service), the system journal.
