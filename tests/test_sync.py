@@ -95,11 +95,18 @@ def make_config(*routes: Route, **sync) -> Config:
     return Config(routes=routes or (Route(("acme/api",), "ENG"),), sync=SyncOptions(**sync))
 
 
-def sync(config, linear, github, apply=False):
+def sync(config, linear, github, apply=False, routes=None):
     out, err = io.StringIO(), io.StringIO()
     github_for = github if callable(github) else (lambda user: github)
     code = run_sync(
-        config, apply=apply, linear=linear, github_for=github_for, out=out, err=err, now="t"
+        config,
+        apply=apply,
+        linear=linear,
+        github_for=github_for,
+        out=out,
+        err=err,
+        now="t",
+        routes=routes,
     )
     return code, out.getvalue(), err.getvalue()
 
@@ -259,6 +266,24 @@ def test_a_failing_route_does_not_stop_the_others():
     assert code == EXIT_FAILED
     assert "route 1 (acme/api -> ENG): GitHub rejected the token" in err
     assert "acme/api#12" in out  # route 2's search returns the same fake node
+
+
+def test_a_sync_of_some_routes_neither_checks_nor_reads_the_others():
+    # Route 1 names a Linear team that doesn't exist, and a GitHub account that can't be read.
+    config = make_config(
+        Route(("acme/api",), "Missing", github_user="unread"), Route(("acme/web",), "ENG")
+    )
+
+    def github_for(user):
+        if user == "unread":
+            raise AssertionError("route 1 should not be read")
+        return FakeGitHub(results={"assignee:": [issue_node(12)]})
+
+    code, out, err = sync(config, FakeLinear(), github_for, routes={2})
+
+    assert code == EXIT_OK
+    assert err == ""
+    assert "1 change (1 create)" in out
 
 
 def test_nothing_to_do():

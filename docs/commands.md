@@ -3,6 +3,10 @@
 ```text
 ferrygl check [--config PATH]
 ferrygl sync [--apply] [--config PATH]
+ferrygl watch [--preview] [--interval SECONDS] [--bg] [--config PATH]
+ferrygl watch --list
+ferrygl watch --stop [ID | all] [--config PATH]
+ferrygl watch --log [ID] [--config PATH]
 ferrygl --version
 ```
 
@@ -81,12 +85,73 @@ fails, the new GitHub state isn't recorded, so the next run tries again. If writ
 fails after the comment was posted, the next run comments again. A failed write is reported,
 and the run carries on with the next change.
 
+## `ferrygl watch`
+
+`watch` keeps Linear in step with GitHub while it runs, so you don't have to run `sync`
+yourself. It syncs every route, then checks GitHub every minute by default, and syncs a route
+again whenever something in its repositories changed. Stop it with
+[`ferrygl watch --stop`](#seeing-and-stopping-watches) from another terminal, which lets it
+finish the sync it's in, or with Ctrl-C, which stops it at once.
+
+```console
+$ ferrygl watch
+Watching 1 route, checking GitHub every 60 seconds. To stop it: Ctrl-C, or ferrygl watch --stop
+2026-10-21T10:15:03+00:00  syncing every route
+No changes.
+2026-10-21T10:32:47+00:00  route 1 (acme/api -> ENG): changed on GitHub
+acme/api#252  issue     update  ENG-7 Todo -> In Review
+Applied 1 change (1 update).
+2026-10-21T10:33:48+00:00  route 1 (acme/api -> ENG): syncing again, in case GitHub's search lagged
+No changes.
+```
+
+Each sync is a `ferrygl sync --apply` of that route, with the same rules and output. Unlike
+`sync`, `watch` makes the changes without asking: add `--preview` to only show them, as
+`ferrygl sync` does. Preview with `ferrygl sync` before you first start `watch`. Before it
+reads GitHub, it checks the Linear setup of every route, and if anything is missing, it stops
+with exit status 2 and changes nothing.
+
+- **What counts as a change.** A check reads the 20 most recently updated issues and pull
+  requests in each route's repositories, updated by anyone. When they differ from what the
+  check before the route's last sync found, the route syncs again. So a change that has
+  nothing to do with you, such as someone else's comment, also starts a sync, which then
+  finds nothing to do. A route syncs at most once per check.
+- **Why a change syncs twice.** GitHub's search can take a moment to show a change, such as a
+  review you just submitted. So after syncing a route for a change, `watch` syncs it once
+  more at the next check. If GitHub takes longer than that, the change is picked up at the
+  route's next change, or when `watch` starts again.
+- **`--interval SECONDS`** sets the time between checks: 60 by default, and at least 30.
+- **Your GitHub rate limit.** GitHub usually gives your account 5,000 points an hour, shared
+  with your other tools, such as the GitHub CLI. A check costs 1 point per route. A sync costs
+  what `ferrygl sync` costs: about 7 points per route, plus, with `prs_with_commits` on, as it
+  is by default, 26 for every 25 pull requests in scope that you didn't open, and at least 26.
+  In a busy repository that adds up, so after its first sync, `watch` doesn't start a sync
+  while less than a quarter of the hour's points are left. It says so, keeps checking, and
+  syncs again once GitHub's limit has reset. To make syncs lighter, set `since`, or turn off
+  `prs_with_commits` ([Roles](configuration.md#roles)).
+- **Errors.** When a check or a sync fails, for example while your machine is offline,
+  `watch` reports it, keeps running, and tries again at the next check.
+- **Changes made only in Linear**, such as a GitHub link you add by hand to settle a `skip`,
+  are picked up at the route's next change on GitHub. Restart `watch` to pick them up sooner.
+- **Changes to the config file** take effect when `watch` starts again: it reads the file
+  once, when it starts.
+- **One watch per config file.** Two runs that create a Linear issue for the same item at the
+  same moment can both create it. So on Linux and macOS, a second `watch` of the same config
+  file stops with exit status 2, and names the ID of the one already running. For the same
+  reason, don't watch the same repositories into the same Linear workspace from two config
+  files, and don't run `ferrygl sync --apply`, by hand or on a schedule, while a `watch`
+  without `--preview` is running.
+- **`--bg`** keeps `watch` running in the background after you close the terminal.
+  `--list` lists the watches running, `--stop` stops one, and `--log` shows a background
+  watch's log. See [Keeping watch running](#keeping-watch-running).
+
 ## Environment variables
 
 | Variable | Meaning |
 |---|---|
 | `FERRYGL_CONFIG` | The config file, when `--config` isn't given |
 | `XDG_CONFIG_HOME` | The base of the default config path |
+| `XDG_STATE_HOME` | The base of the directory where `watch` keeps its lock and, with `--bg`, its log |
 | `LINEAR_API_KEY` | Your Linear API key. Takes precedence over `[linear] api_key_file` |
 | `GH_TOKEN`, `GITHUB_TOKEN` | A GitHub token for routes without `github_user` |
 
@@ -96,13 +161,25 @@ and the run carries on with the next change.
 |---|---|
 | 0 | Everything worked |
 | 1 | A route couldn't be read, or a write failed. Other routes and changes still ran. For `check`, at least one line is ✗ |
-| 2 | A setup or configuration error: an invalid config file or no Linear API key. For `sync`, also Linear unreachable at the start, or a missing team, project, state or label. Nothing was read from GitHub or written to Linear. `check` reports those Linear problems as ✗ lines, with status 1 |
+| 2 | A setup or configuration error: an invalid config file or no Linear API key. For `sync` and `watch`, also Linear unreachable at the start, or a missing team, project, state or label. Nothing was read from GitHub or written to Linear. `check` reports those Linear problems as ✗ lines, with status 1 |
 | 130 | Interrupted with Ctrl-C. Changes already made stay made, and a rerun picks up the rest |
+
+`watch` runs until you stop it. It ends with status 0 when asked to stop (`--stop`, `kill` or
+`systemctl stop`), and 130 with Ctrl-C. It ends with 2 at the start if the configuration or
+the Linear setup is wrong, Linear can't be reached, or a watch of the same config file is
+running. Failures after that are reported, and `watch` keeps running.
+
+With `--bg`, `watch` exits as soon as the background watch is running, with status 0. A
+problem it finds first gives 2 for the setup, or 1 if GitHub can't be read. `--list`,
+`--stop` and `--log` end with 0, or 1 when there's no watch with the ID given, or no log to
+show. `--bg`, `--list`, `--stop` and `--log` end with 2 on Windows, where they aren't
+available.
 
 ## Running on a schedule
 
 ferryGL polls: Linear catches up each time it runs. A run with nothing to do changes nothing,
-so you can run it as often as you like.
+so you can run it as often as you like. To sync as things change rather than at set times,
+use [`ferrygl watch`](#ferrygl-watch).
 
 ### cron
 
@@ -132,6 +209,116 @@ GitHub token and Linear API key stored as secrets:
   other organizations' repositories. Use your own token.
 
 A template workflow is planned.
+
+## Keeping watch running
+
+`ferrygl watch` runs as long as the terminal it started in. Add `--bg` to keep it running in
+the background instead:
+
+```console
+$ ferrygl watch --bg
+Watching in the background, as watch 12345. Its output goes to /home/alice/.local/state/ferrygl/watch-ferrygl-bf1e20bc.log.
+To stop it: ferrygl watch --stop 12345
+```
+
+- **Problems show up front.** Before it goes to the background, `--bg` checks the Linear
+  setup, and that GitHub can be read for every route. If anything is wrong, it says so and
+  starts nothing. Then it waits two seconds, and if the background watch stops in that time,
+  it shows what the watch wrote.
+- **Each config file has its own log**, in `$XDG_STATE_HOME/ferrygl`, or
+  `~/.local/state/ferrygl` when that isn't set, named after the config file. Each background
+  watch of that config file adds to it, so it grows while you use `--bg`. Delete it while no
+  watch of that config file is running to start afresh. Only you can read the folder and its
+  files, since the log names GitHub items and the titles of Linear issues.
+- **Credentials** come from the environment you start it in, such as `LINEAR_API_KEY` and
+  `GH_TOKEN`, and never appear on its command line.
+- **It doesn't come back by itself.** A background watch stops when you stop it or restart
+  your machine, and on some systems when you log out. To start it when you log in, and
+  restart it if it fails, make it a [service](#as-a-systemd-service) instead.
+- `--bg`, `--list`, `--stop` and `--log` work on Linux and macOS. On Windows, run
+  `ferrygl watch` in a window of its own, and stop it with Ctrl-C.
+
+### Seeing and stopping watches
+
+`ferrygl watch --list` shows the watches running on your machine, with their IDs:
+
+```console
+$ ferrygl watch --list
+ID     STARTED                    RUNS IN     MODE     EVERY  CONFIG
+12345  2026-10-23T09:15:03+00:00  background  apply    60s    /home/alice/.config/ferrygl/ferrygl.toml
+12399  2026-10-23T09:40:11+00:00  foreground  preview  120s   /home/alice/clients/beta.toml
+```
+
+A watch's ID is its process ID. `RUNS IN` is `background` for a watch started with `--bg`,
+and `foreground` for one running in a terminal or as a service. `MODE` is `apply` when it
+makes changes, and `preview` when it only shows them.
+
+```text
+ferrygl watch --list               the watches running, with their IDs
+ferrygl watch --stop [ID | all]    stop a watch, or all of them
+ferrygl watch --log [ID]           the last 20 lines of a background watch's log
+```
+
+Without an ID, `--stop` and `--log` act on the watch of the config file in use: the one
+`--config` or `FERRYGL_CONFIG` names, or the default one. So if you have one config file,
+`ferrygl watch --stop` stops its watch, and `ferrygl watch --log` shows its log, even after
+the watch has stopped, which is when you'll want to know why.
+
+```console
+$ ferrygl watch --stop
+Stopping watch 12345 (/home/alice/.config/ferrygl/ferrygl.toml)...
+Watch 12345 stopped.
+```
+
+- **Stopping is safe.** `--stop` asks the watch to stop, and the watch finishes the sync it's
+  in first, so no change is left half made. `--stop` waits up to 30 seconds for it; a watch
+  still busy then stops as soon as its sync ends. A plain `kill ID` does the same, and so does
+  `systemctl --user stop`. Ctrl-C, on the other hand, stops a watch at once.
+- **A stopped watch ends with status 0**, and its last line, in its log or terminal, ends
+  with `stopped, as asked`.
+- **To follow a log** as it grows, use `tail -f` on the file `--log` names.
+- **`--stop` and `--log` need no credentials**, and read nothing from GitHub or Linear.
+
+### As a systemd service
+
+On Linux, with systemd, save this as `~/.config/systemd/user/ferrygl.service`:
+
+```ini
+[Unit]
+Description=ferryGL: keep Linear in step with GitHub
+
+[Service]
+ExecStart=%h/.local/bin/ferrygl watch
+Restart=on-failure
+RestartSec=5min
+TimeoutStopSec=5min
+
+[Install]
+WantedBy=default.target
+```
+
+Then start it, and follow its output:
+
+```console
+$ systemctl --user enable --now ferrygl
+$ journalctl --user -u ferrygl -f
+```
+
+- Set `ExecStart` to the path `command -v ferrygl` shows, and leave out `--bg`: systemd keeps
+  `watch` in the background itself, and its output goes to the journal.
+- `ferrygl watch --list` shows the service's watch too, as running in the foreground. Its
+  output is in the journal, so `ferrygl watch --log` doesn't show it.
+- `systemctl --user stop ferrygl` and `ferrygl watch --stop` both stop it after its current
+  sync. `TimeoutStopSec=5min` gives a slow sync time to finish before systemd ends it, and
+  systemd doesn't restart a watch that stopped when asked.
+- If `watch` stops on an error, for example because Linear can't be reached as you log in,
+  systemd starts it again 5 minutes later. After fixing a setup problem, run
+  `systemctl --user restart ferrygl`.
+- Like cron, a service doesn't load your shell's environment, so follow the [cron](#cron)
+  notes for the Linear key and the GitHub token. If you use the GitHub CLI, add
+  `Environment=PATH=…` to `[Service]`, with the folder `command -v gh` shows, so that the
+  service finds `gh`.
+- The service stops when you log out, unless you run `loginctl enable-linger`.
 
 ## Running from VS Code
 
@@ -199,6 +386,14 @@ To get completion and checks while you edit `ferrygl.toml`, see
 | `GitHub rejected the token (HTTP 401)` | The token expired or was revoked. `gh auth status` shows which |
 | `acme/web: not found with this token` | The token can't see the repository: wrong account, missing fine-grained access, or the organization hasn't approved the token |
 | `several of your Linear issues mention it (ENG-3, ENG-8)` | Add the GitHub link to the right Linear issue by hand, then run again |
+| `ferryGL is already watching …, as watch 12345` | A watch of that config file is running. Leave it running, or stop it with `ferrygl watch --stop 12345`, then start yours |
+| `no watch with ID 12345 is running` | That watch has stopped, or the ID is mistyped. `ferrygl watch --list` shows the IDs of those running |
+| `the background watch stopped right away` | The lines below the message are what it wrote, and `ferrygl watch --log` shows them again. Fix what they say, then run it again |
+| `waiting until …, when GitHub's rate limit resets` | `watch` leaves a quarter of your GitHub rate limit to your other tools, and syncs again after the reset. To use fewer points, set `since`, turn off `prs_with_commits`, or lengthen `--interval` |
+| `watch makes the changes by default; add --preview to only show them` | `watch` has no `--apply`. Leave it out, or add `--preview` to only show the changes |
+| `` Not started. Run `ferrygl check` for details. `` | `--bg` couldn't read GitHub for a route, and the lines above say which. Fix it, then start the watch again |
+| `watch 12345 runs in the foreground: its output goes to the terminal or service that started it` | `--log` shows only the logs of watches started with `--bg`. Look in that terminal, or for a service, in the journal |
+| `` … has no log yet. `ferrygl watch --bg` writes one. `` | No watch of that config file has run with `--bg`. If you use another config file, name it with `--config` |
 
 **A run stopped halfway.** Run it again. ferryGL finds Linear issues by their GitHub links,
 so it carries on where it stopped without creating duplicates.

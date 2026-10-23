@@ -12,6 +12,9 @@ ferryGL uses the first of:
 3. `$XDG_CONFIG_HOME/ferrygl/ferrygl.toml`, or `~/.config/ferrygl/ferrygl.toml` when
    `XDG_CONFIG_HOME` isn't set.
 
+A running [`ferrygl watch`](commands.md#ferrygl-watch) reads the file once, when it starts.
+After you edit it, stop the watch and start it again.
+
 ## A complete example
 
 ```toml
@@ -103,7 +106,8 @@ changes from your own, and says what changed and why:
 
 - Comments name only GitHub items (`owner/repo#number`), their GitHub state and Linear status
   names. They never include titles or descriptions.
-- `ferrygl sync` prints each comment under its change, so you can read them before `--apply`.
+- `ferrygl sync`, and `ferrygl watch --preview`, print each comment under its change, so you
+  can read them before any is posted. `ferrygl watch` posts them as it syncs.
 - They're posted as you, the API key's owner. Linear notifies anyone else subscribed to the
   issue, as it would for a comment you wrote.
 - If you limited the API key's permissions, make sure it can create comments.
@@ -183,7 +187,8 @@ Your team's Linear workflow state names, for each status ferryGL sets.
 
 Each name must exist, spelled exactly the same, in the team of every route. If routes go to
 teams with different workflows, the names must exist in all of them. If one is missing,
-`ferrygl check` reports it, and `ferrygl sync` stops before changing anything.
+`ferrygl check` reports it, and `ferrygl sync` and `ferrygl watch` stop before changing
+anything.
 
 The [status rules](sync-rules.md#status-rules) say which GitHub states lead to which status.
 
@@ -197,7 +202,7 @@ The [status rules](sync-rules.md#status-rules) say which GitHub states lead to w
 
 ## Validation
 
-ferryGL checks the whole file before doing anything else:
+ferryGL checks the whole file before doing anything else, and stops at the first problem:
 
 - Unknown tables and keys are errors, so a misspelled setting can't be silently ignored.
 - Each error names the file and the setting, and the run exits with status 2.

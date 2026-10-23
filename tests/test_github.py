@@ -9,10 +9,12 @@ import pytest
 
 from ferrygl.config import Route, SyncOptions
 from ferrygl.github import (
+    Activity,
     GitHubClient,
     GitHubError,
     fetch_items,
     has_commit_by,
+    latest_activity,
     parse_node,
     references,
     resolve_token,
@@ -256,6 +258,38 @@ def test_search_follows_pages_and_asks_for_commits_only_when_needed():
     assert [n["number"] for n in client.search("is:issue")] == [1, 2]
     client.search("is:pr", with_commits=True)
     assert seen == [(None, 50, False), ("c1", 50, False), (None, 25, True), ("c1", 25, True)]
+
+
+def test_latest_activity_reads_recent_updates_in_scope_and_the_rate_limit():
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        seen.append((body["query"].split("(")[0].strip(), body["variables"]))
+        nodes = [
+            {"url": "https://github.com/acme/api/issues/12", "updatedAt": "2026-10-21T10:02:00Z"},
+            {"url": "https://github.com/other/web/pull/7", "updatedAt": "2026-10-21T10:01:00Z"},
+            {},  # a result of another type
+        ]
+        rate = {"limit": 5000, "remaining": 4321, "resetAt": "2026-10-21T11:00:00Z"}
+        return httpx.Response(200, json={"data": {"rateLimit": rate, "search": {"nodes": nodes}}})
+
+    client = GitHubClient("t", http=httpx.Client(transport=httpx.MockTransport(handler)))
+
+    activity = latest_activity(client, Route(repos=("acme/api", "other/*"), team="ENG"))
+
+    assert seen == [("query", {"q": "repo:acme/api user:other sort:updated-desc", "first": 20})]
+    assert activity == Activity(
+        updates=frozenset(
+            {
+                ("https://github.com/acme/api/issues/12", "2026-10-21T10:02:00Z"),
+                ("https://github.com/other/web/pull/7", "2026-10-21T10:01:00Z"),
+            }
+        ),
+        remaining=4321,
+        limit=5000,
+        reset_at="2026-10-21T11:00:00Z",
+    )
 
 
 def test_rejected_token_is_reported_plainly():

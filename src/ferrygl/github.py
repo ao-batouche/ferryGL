@@ -55,6 +55,21 @@ COMMITS_PAGE_SIZE = 25
 _REPOSITORY = "query($o: String!, $n: String!) { repository(owner: $o, name: $n) { id } }"
 _OWNER = "query($o: String!) { repositoryOwner(login: $o) { id } }"
 
+# The most recently updated results of a search, for `watch`, with the token's rate limit.
+_LATEST = """
+query($q: String!, $first: Int!) {
+  rateLimit { limit remaining resetAt }
+  search(query: $q, type: ISSUE, first: $first) {
+    nodes {
+      ... on Issue { url updatedAt }
+      ... on PullRequest { url updatedAt }
+    }
+  }
+}
+"""
+# More than one, so that an update GitHub's search indexes late still shows up among them.
+LATEST_SIZE = 20
+
 _URL_REF = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)/(?:issues|pull)/(\d+)")
 _REPO_REF = re.compile(r"(?<![\w./-])([\w.-]+/[\w.-]+)#(\d+)\b")
 _LOCAL_REF = re.compile(r"(?<![\w/#&])#(\d+)\b")
@@ -62,6 +77,16 @@ _LOCAL_REF = re.compile(r"(?<![\w/#&])#(\d+)\b")
 
 class GitHubError(Exception):
     """GitHub couldn't be reached, rejected the token, or returned an error."""
+
+
+@dataclass(frozen=True)
+class Activity:
+    """The latest updates in some repositories, and what's left of the token's rate limit."""
+
+    updates: frozenset[tuple[str, str]]  # (URL, updatedAt) of the most recently updated items
+    remaining: int  # rate-limit points left until ``reset_at``
+    limit: int  # points per hour
+    reset_at: str  # ISO timestamp
 
 
 Runner = Callable[..., subprocess.CompletedProcess[str]]
@@ -137,6 +162,17 @@ class GitHubClient:
                 return nodes
             after = page["pageInfo"]["endCursor"]
 
+    def activity(self, query: str) -> Activity:
+        """The most recently updated results of a search, by anyone, and the rate limit."""
+        data = self.graphql(_LATEST, {"q": f"{query} sort:updated-desc", "first": LATEST_SIZE})
+        rate = data["rateLimit"]
+        return Activity(
+            updates=frozenset((n["url"], n["updatedAt"]) for n in data["search"]["nodes"] if n),
+            remaining=rate["remaining"],
+            limit=rate["limit"],
+            reset_at=rate["resetAt"],
+        )
+
     def _request(self, query: str, variables: dict[str, Any]) -> dict[str, Any]:
         payload = {"query": query, "variables": variables}
         try:
@@ -159,13 +195,22 @@ class Search:
     commits: bool = False  # keep only pull requests with a commit you wrote
 
 
-def searches(route: Route, login: str, sync: SyncOptions) -> list[Search]:
-    """The GitHub searches for one route."""
+def scope(route: Route) -> str:
+    """Search qualifiers for the route's repositories."""
     # "user:" matches the repositories of an organization as well as a user.
-    scope = " ".join(
+    return " ".join(
         f"user:{repo.split('/')[0]}" if repo.endswith("/*") else f"repo:{repo}"
         for repo in route.repos
     )
+
+
+def latest_activity(client: GitHubClient, route: Route) -> Activity:
+    """The latest updates to issues and pull requests in the route's repositories."""
+    return client.activity(scope(route))
+
+
+def searches(route: Route, login: str, sync: SyncOptions) -> list[Search]:
+    """The GitHub searches for one route."""
     since = f" updated:>={sync.since.isoformat()}" if sync.since else ""
     others = f"-author:{login}"
     wanted = [
@@ -183,7 +228,7 @@ def searches(route: Route, login: str, sync: SyncOptions) -> list[Search]:
         (sync.prs_with_commits, Search(Role.COMMITTER, f"is:pr {others}", False, commits=True)),
     ]
     return [
-        replace(search, query=f"{search.query} {scope}{since}")
+        replace(search, query=f"{search.query} {scope(route)}{since}")
         for enabled, search in wanted
         if enabled
     ]

@@ -152,7 +152,8 @@ route 1: acme/api -> ENG
 ```
 
 `check` writes nothing. The first line confirms your Linear key, and each route shows the
-GitHub account ferryGL reads as, every repository it can see, and the Linear team and states.
+GitHub account ferryGL reads as, whether it can see each repository, and the Linear team and
+states.
 Fix every ✗ before going on. The common ones:
 
 | You see | What to do |
@@ -221,6 +222,8 @@ No changes.
 
 ## Next steps
 
-- [Run it on a schedule](commands.md#running-on-a-schedule) to keep Linear up to date.
+- Keep Linear up to date: leave [`ferrygl watch`](commands.md#ferrygl-watch) running, which
+  makes the changes as things change on GitHub (add `--preview` to only show them), or
+  [run `sync` on a schedule](commands.md#running-on-a-schedule).
 - Widen `since`, add routes, or turn roles on and off in [Configuration](configuration.md).
 - Read the [sync rules](sync-rules.md) to see exactly how statuses move.

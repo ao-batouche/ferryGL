@@ -18,8 +18,9 @@ token-free automation: it runs no AI model, so unlike an AI agent doing the same
 spends no tokens. If you work with an AI agent, the agent can run ferryGL for you and read
 only its plan.
 
-> **Status: early version (0.2).** `ferrygl check` and `ferrygl sync` work, and are tested
-> with local fixtures and against a real GitHub repository.
+> **Status: early version (0.2).** `ferrygl check`, `ferrygl sync` and `ferrygl watch` work.
+> They're tested with local fixtures, and their GitHub reads against a real GitHub
+> repository.
 >
 > ferryGL is an independent project. It is not affiliated with or endorsed by Linear or GitHub.
 
@@ -71,6 +72,8 @@ It's built to be safe in repositories that belong to someone else:
 
 - **Read-only on GitHub.** It never comments, labels or changes anything there.
 - **Preview first.** `ferrygl sync` only shows what it would do. `ferrygl sync --apply` does it.
+  `ferrygl watch` makes changes as they come, unless you add `--preview`, so preview with
+  `ferrygl sync` before you start it.
 - **Your edits win.** It moves a Linear status only when something changes on GitHub. If you
   move an issue by hand, it stays where you put it.
 - **Only your issues.** It changes only Linear issues assigned to you, never a teammate's.
@@ -81,7 +84,8 @@ It's built to be safe in repositories that belong to someone else:
 
 ## How it works
 
-ferryGL is a command you run by hand or on a schedule. It has no server and no database.
+ferryGL is a command you run by hand, on a schedule, or with `ferrygl watch`, which syncs
+whenever your repositories change. It has no server and no database.
 
 1. **Read GitHub.** For each *route* in your config (some repositories and the Linear team
    they go to), ferryGL searches GitHub once for each of your roles.
@@ -91,7 +95,8 @@ ferryGL is a command you run by hand or on a schedule. It has no server and no d
    one instead.
 3. **Plan.** It compares GitHub with Linear and lists the changes: create an issue, link one,
    or move a status.
-4. **Apply.** With `--apply`, it makes those changes in Linear.
+4. **Apply.** `ferrygl sync --apply` makes those changes in Linear, and so does
+   `ferrygl watch` unless you add `--preview`. `ferrygl sync` alone writes nothing.
 
 On each Linear issue, ferryGL records the last GitHub state it acted on in the metadata of
 the GitHub link. That's how it tells whether something changed on GitHub since the last run,
@@ -143,6 +148,12 @@ workspace.
    3 changes (1 adopt, 1 link, 1 update). Run with --apply to make them.
    ```
 
+6. To keep Linear in step from then on, leave `ferrygl watch` running, or add `--bg` (Linux
+   and macOS) to run it in the background. It checks GitHub every minute by default, and
+   syncs a route whenever something in its repositories changes. It makes the changes as
+   they come; add `--preview` to only show them. `ferrygl watch --list` shows the watches
+   running, and `ferrygl watch --stop` stops one.
+
 [Getting started](https://oussamabatouche.com/ferryGL/docs/getting-started.html) walks through the same steps in more detail.
 
 ## Documentation
@@ -155,7 +166,7 @@ The documentation is on the website, at https://oussamabatouche.com/ferryGL/. It
 | [Getting started](https://oussamabatouche.com/ferryGL/docs/getting-started.html) | Install, credentials, and a careful first run |
 | [Configuration](https://oussamabatouche.com/ferryGL/docs/configuration.html) | Every setting in `ferrygl.toml`, and checks in your editor |
 | [Sync rules](https://oussamabatouche.com/ferryGL/docs/sync-rules.html) | Which items are synced, how they map to Linear issues, and how statuses move |
-| [Commands](https://oussamabatouche.com/ferryGL/docs/commands.html) | `check` and `sync`, reading the plan, exit statuses, schedules, VS Code, troubleshooting |
+| [Commands](https://oussamabatouche.com/ferryGL/docs/commands.html) | `check`, `sync` and `watch`, background watches, reading the plan, exit statuses, schedules, VS Code, troubleshooting |
 | [AI agents](https://oussamabatouche.com/ferryGL/docs/ai-agents.html) | Have an AI agent run ferryGL for you, for a fraction of the tokens |
 | [Data and privacy](https://oussamabatouche.com/ferryGL/docs/data-and-privacy.html) | What ferryGL reads, what it writes to Linear, and what it keeps |
 | [Architecture](https://oussamabatouche.com/ferryGL/docs/architecture.html) | How a run works inside, request costs, retries and limits |
@@ -164,7 +175,8 @@ The documentation is on the website, at https://oussamabatouche.com/ferryGL/. It
 
 - Write anything to GitHub.
 - Sync both ways, or keep descriptions and comments in sync.
-- React instantly. There are no webhooks: Linear catches up each time ferryGL runs.
+- React instantly. Webhooks would need admin access to the repository, so ferryGL polls:
+  Linear catches up each time it runs, or within a minute or two with `ferrygl watch`.
 - Sync every issue in a repository for a whole team. Linear's GitHub integration does that
   when you can install it.
 

@@ -37,6 +37,7 @@ request on every run.
 
    To sync my GitHub work into Linear, run `ferrygl sync` and show me the plan.
    Run `ferrygl sync --apply` only after I approve it.
+   Don't start `ferrygl watch`: it makes changes without asking.
    If a line says skip, tell me what ferryGL needs.
    If the exit status is 2, report the error and stop.
    Never change GitHub or Linear yourself to do this.
@@ -58,6 +59,6 @@ Then ask the agent to sync, or let it sync when your work calls for it.
 ## When you don't need an agent
 
 ferryGL runs on a schedule by itself, with cron or GitHub Actions
-([Running on a schedule](commands.md#running-on-a-schedule)). A scheduled run spends no
-tokens at all. Ask an agent to run it when you're already working with one and want the sync
-done along the way.
+([Running on a schedule](commands.md#running-on-a-schedule)), or as things change, with
+[`ferrygl watch`](commands.md#ferrygl-watch). Either way, it spends no tokens at all. Ask an
+agent to run it when you're already working with one and want the sync done along the way.
