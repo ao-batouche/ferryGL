@@ -18,7 +18,7 @@ token-free automation: it runs no AI model, so unlike an AI agent doing the same
 spends no tokens. If you work with an AI agent, the agent can run ferryGL for you and read
 only its plan.
 
-> **Status: early version (0.2).** `ferrygl check`, `ferrygl sync` and `ferrygl watch` work.
+> **Status: early version (0.3).** `ferrygl check`, `ferrygl sync` and `ferrygl watch` work.
 > They're tested with local fixtures, and their GitHub reads against a real GitHub
 > repository.
 >

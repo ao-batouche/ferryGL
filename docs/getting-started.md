@@ -18,7 +18,7 @@ and what they print.
 ```console
 $ pipx install ferrygl
 $ ferrygl --version
-ferrygl 0.2.1
+ferrygl 0.3.0
 ```
 
 `uv tool install ferrygl` and `pip install ferrygl` work too. If your shell can't find

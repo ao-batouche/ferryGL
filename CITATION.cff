@@ -10,8 +10,8 @@ type: software
 authors:
   - family-names: Batouche
     given-names: Oussama
-version: 0.2.1
-date-released: 2026-10-16
+version: 0.3.0
+date-released: 2026-10-23
 license: MIT
 repository-code: "https://github.com/ao-batouche/ferryGL"
 url: "https://oussamabatouche.com/ferryGL/"
